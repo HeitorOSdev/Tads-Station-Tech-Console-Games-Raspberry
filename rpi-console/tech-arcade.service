@@ -1,0 +1,16 @@
+[Unit]
+Description=Tech Arcade Console Launcher (Modo Kiosk 1024x600)
+After=network.target sound.target graphical.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/tech-arcade/rpi-console
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+ExecStart=/usr/bin/python3 /home/pi/tech-arcade/rpi-console/main.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target
