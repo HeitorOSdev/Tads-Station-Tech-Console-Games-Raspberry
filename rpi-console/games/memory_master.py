@@ -62,9 +62,9 @@ class JogoMemoryMaster(Jogo):
         self.cor_mostrando = -1
         self.led_ativo = False
 
-        # Modo Sem LEDs (para jogar pela tela caso os LEDs físicos estejam desconectados)
-        self.modo_sem_leds = False
-        self.btn_modo = TouchButton(750, 70, 230, 38, "MODO: COM LEDS", (20, 50, 85))
+        # Modo Sem LEDs (padrão ativado para exibir a sequência visualmente na tela além dos LEDs físicos)
+        self.modo_sem_leds = True
+        self.btn_modo = TouchButton(750, 70, 230, 38, "MODO: SEM LEDS (TELA)", (90, 40, 100))
 
         # Seletor de 2 Botões físicos (BT1 = Mover, BT2 = Escolher)
         self.seletor_cor = 0
@@ -180,8 +180,8 @@ class JogoMemoryMaster(Jogo):
                     self.estado = "ACERTO"
                     self.timer_geral = agora + 0.65
             else:
-                # Acertou o passo intermediário; dá novo fôlego de 6s para o próximo passo!
-                self.timer_timeout_jogador = agora + 6.0
+                # Acertou o passo intermediário; dá novo fôlego de 10s para o próximo passo!
+                self.timer_timeout_jogador = agora + 10.0
         else:
             # Errou a cor!
             self.estado = "DERROTA"
@@ -225,7 +225,7 @@ class JogoMemoryMaster(Jogo):
                         self.passo_jogador = 0
                         self.cor_feedback = -1
                         self.bloqueio_entrada_ate = agora + 0.20  # Evita clique residual da exibição
-                        self.timer_timeout_jogador = agora + 6.0  # 6 segundos para a primeira jogada
+                        self.timer_timeout_jogador = agora + 10.0  # 10 segundos para a primeira jogada
 
         elif self.estado == "JOGADOR":
             # Apaga o LED e o destaque de feedback após 0.25s da jogada
@@ -320,14 +320,14 @@ class JogoMemoryMaster(Jogo):
 
         # Rodapé e Dica
         surf_placar = fonte_med.render(f"RODADA: {self.rodada}   |   RECORDE: {self.recorde}", True, COLOR_TEXT)
-        superficie.blit(surf_placar, surf_placar.get_rect(center=(512, 515)))
+        superficie.blit(surf_placar, surf_placar.get_rect(center=(512, 508)))
 
         if not self.modo_touch:
-            msg_dica = "[BT1] Mover Seletor     |     [BT2] Confirmar Cor     |     Segure [BT2] 1.5s p/ Menu"
+            msg_dica = "[BT1] Mover Seletor     |     [BT2] Confirmar Cor"
         else:
             msg_dica = "Toque diretamente na cor desejada ou use [BT1] Mover e [BT2] Escolher"
         surf_dica = fonte_peq.render(msg_dica, True, COLOR_TEXT_DIM)
-        superficie.blit(surf_dica, surf_dica.get_rect(center=(512, 545)))
+        superficie.blit(surf_dica, surf_dica.get_rect(center=(512, 532)))
 
     def encerrar(self) -> None:
         self.hw.apagar_leds()

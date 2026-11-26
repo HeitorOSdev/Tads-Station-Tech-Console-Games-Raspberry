@@ -62,10 +62,21 @@ class TouchButton:
         pygame.draw.rect(superficie, cor_fundo, self.rect, border_radius=10)
         pygame.draw.rect(superficie, cor_borda, self.rect, width=2, border_radius=10)
 
-        # Texto centralizado
-        surf_texto = fonte.render(self.texto, True, COLOR_TEXT)
-        rect_texto = surf_texto.get_rect(center=self.rect.center)
-        superficie.blit(surf_texto, rect_texto)
+        # Texto centralizado (suporte a múltiplas linhas se houver \n)
+        linhas = self.texto.split("\n")
+        if len(linhas) <= 1:
+            surf_texto = fonte.render(self.texto, True, COLOR_TEXT)
+            rect_texto = surf_texto.get_rect(center=self.rect.center)
+            superficie.blit(surf_texto, rect_texto)
+        else:
+            altura_linha = fonte.get_linesize()
+            total_altura = len(linhas) * altura_linha
+            y_inicial = self.rect.centery - (total_altura // 2) + (altura_linha // 2)
+            for i, linha in enumerate(linhas):
+                if linha.strip():
+                    surf_texto = fonte.render(linha, True, COLOR_TEXT)
+                    rect_texto = surf_texto.get_rect(center=(self.rect.centerx, y_inicial + i * altura_linha))
+                    superficie.blit(surf_texto, rect_texto)
 
 
 class HeaderBar:
@@ -109,8 +120,77 @@ class HeaderBar:
         superficie.blit(surf_hora, (pos_x, 22))
 
 
+class SystemCommandBar:
+    """
+    Barra inferior de comandos do sistema (1024x50) que substitui a exibição dos LEDs no rodapé.
+    Exibe os comandos principais de controle do console físico e touch:
+    - O que cada botão físico faz com um clique simples ([BT1] e [BT2])
+    - Ações acionadas ao segurar os botões (ex: 1.5s para Menu, 1.0s com ambos pressionados)
+    - Barra dinâmica de progresso com feedback visual caso o jogador esteja segurando para retornar ao menu
+    """
+
+    def __init__(self, y: int = 550):
+        self.y = y
+        self.altura = 50
+
+    def renderizar(
+        self,
+        superficie: pygame.Surface,
+        fonte_peq: pygame.font.Font,
+        estado_console: str = "MENU",
+        progresso_retorno: float = 0.0
+    ):
+        # Fundo escuro com borda de destaque superior
+        pygame.draw.rect(superficie, (12, 16, 28), (0, self.y, 1024, self.altura))
+        pygame.draw.line(superficie, (45, 60, 95), (0, self.y), (1024, self.y), 2)
+
+        # Se o usuário estiver segurando o comando de retorno, exibe feedback visual com barra de progresso
+        if progresso_retorno > 0.06 and estado_console == "JOGANDO":
+            largura_barra = 580
+            altura_barra = 26
+            rx = (1024 - largura_barra) // 2
+            ry = self.y + 12
+
+            # Fundo da barra
+            pygame.draw.rect(superficie, (20, 25, 42), (rx, ry, largura_barra, altura_barra), border_radius=8)
+            pygame.draw.rect(superficie, (90, 115, 165), (rx, ry, largura_barra, altura_barra), width=2, border_radius=8)
+
+            # Preenchimento animado
+            preenchimento = int(largura_barra * min(1.0, progresso_retorno))
+            if preenchimento > 0:
+                cor_preenchimento = (255, 205, 50) if progresso_retorno < 0.85 else (40, 240, 130)
+                pygame.draw.rect(superficie, cor_preenchimento, (rx, ry, preenchimento, altura_barra), border_radius=8)
+
+            pct = int(progresso_retorno * 100)
+            txt_prog = f"RETORNANDO AO MENU PRINCIPAL... {pct}% (SOLTE PARA CANCELAR)"
+            cor_txt = (15, 20, 30) if preenchimento > 290 else (240, 245, 255)
+            surf_prog = fonte_peq.render(txt_prog, True, cor_txt)
+            superficie.blit(surf_prog, surf_prog.get_rect(center=(512, ry + altura_barra // 2)))
+            return
+
+        y_l1 = self.y + 15
+        y_l2 = self.y + 36
+
+        if estado_console == "MENU":
+            txt_l1 = "[BT1] Clique: Próximo Jogo (Carrossel)    •    [BT2] Clique: Iniciar / Confirmar    •    Touch: Seleção Direta"
+            surf_l1 = fonte_peq.render(txt_l1, True, (220, 235, 255))
+            superficie.blit(surf_l1, surf_l1.get_rect(center=(512, y_l1)))
+
+            txt_l2 = "Segurar [BT2] por 1.5s (ou [BT1+BT2] 1.0s): Retornar ao Menu em Jogos    •    [DESLIGAR]: Topo Direito"
+            surf_l2 = fonte_peq.render(txt_l2, True, (140, 160, 195))
+            superficie.blit(surf_l2, surf_l2.get_rect(center=(512, y_l2)))
+        else:
+            txt_l1 = "[BT1] / [BT2] Clique: Ações Físicas do Jogo    •    Tela Touch: Toque Direto nos Elementos"
+            surf_l1 = fonte_peq.render(txt_l1, True, (220, 235, 255))
+            superficie.blit(surf_l1, surf_l1.get_rect(center=(512, y_l1)))
+
+            txt_l2 = "Segurar [BT2] por 1.5s (ou [BT1+BT2] 1.0s): RETORNAR AO MENU PRINCIPAL    •    [<- VOLTAR]: Topo Esquerdo"
+            surf_l2 = fonte_peq.render(txt_l2, True, (255, 215, 80))
+            superficie.blit(surf_l2, surf_l2.get_rect(center=(512, y_l2)))
+
+
 class HardwareLedBar:
-    """Mostrador visual dos 5 LEDs físicos do console na parte inferior da tela."""
+    """Mostrador visual dos 5 LEDs físicos do console na parte inferior da tela (mantido para compatibilidade)."""
 
     CORES_LEDS = [
         (255, 60, 90),   # Vermelho

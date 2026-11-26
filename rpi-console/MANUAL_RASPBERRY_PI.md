@@ -182,10 +182,15 @@ sudo systemctl start tech-arcade.service
   * O botão VOLTAR no topo da tela touch também permanece sempre acessível.
 * **Desligamento Seguro:**
   * Toque no botão vermelho **DESLIGAR** no topo direito da tela touch do menu. No modal de confirmação: **BT1 Cancela** e **BT2 Confirma** o desligamento seguro do sistema.
+* **Barra de Comandos no Rodapé (Substitui os LEDs na tela):**
+  * O rodapé permanente do console (Y=550 a 600) exibe em tempo real o mapa completo de comandos ativos:
+    * **No Menu:** `[BT1]` Clique: Próximo Jogo | `[BT2]` Clique: Iniciar Jogo | Segurar `[BT2]` 1.5s p/ Menu | `[DESLIGAR]` no Topo.
+    * **Nos Jogos:** `[BT1]` e `[BT2]` Clique: Ações do Jogo | Segurar `[BT2]` 1.5s (ou `BT1+BT2` 1s): Abortar e Voltar ao Menu (com barra dinâmica de progresso).
+    * Os LEDs físicos continuam acendendo na placa/hardware nos pinos GPIO dedicados.
 * **Controles dos 6 Jogos:**
-  1. **Memory Master (Genius das Cores):** Modos "COM LEDS" (padrão) e "SEM LEDS" (as cores brilham visualmente na tela, permitindo jogar apenas pelo display). Os LEDs físicos (Pinos 11, 13, 15, 16) continuam sempre ativos. Na resposta, use o seletor com 2 botões (**BT1** move o seletor entre as cores, **BT2** escolhe) ou toque direto nos quadrantes touch.
+  1. **Memory Master (Genius das Cores):** Inicia por padrão no modo "SEM LEDS (TELA)" exibindo a sequência de cores diretamente na tela com destaque visual (os LEDs físicos nos pinos 11, 13, 15, 16 continuam sendo acionados em paralelo). O tempo de resposta para cada escolha foi ampliado para **10 segundos**. O jogador pode alternar para "MODO: COM LEDS" a qualquer momento na tela touch. Na resposta, use o seletor com 2 botões (**BT1** move o seletor entre as cores, **BT2** escolhe) ou toque direto nos quadrantes touch.
   2. **Ping Pong Arcade (Duelo 2P):** Raquetes contínuas e ritmo acelerado da bola (início dinâmico a 320 px/s e raquete a 270 px/s). O Jogador 1 (Esquerda) usa **BT1** (ou toque na metade esquerda) e o Jogador 2 (Direita) usa **BT2** (ou toque na metade direita) para inverter o sentido das raquetes.
   3. **Quick Draw (Duelo de Reação 2P):** Duelo rápido de faroeste. O Jogador 1 usa **BT1** e o Jogador 2 usa **BT2** (ou toque em cada lado da tela).
   4. **Campo Minado (Dedução Lógica Clássica):** Grade 3x4 (12 células) com 3 minas e pistas numéricas vizinhas (1, 2, 3...). O primeiro clique é sempre seguro e revela caminhos em cadeia. **BT1** move o cursor luminoso e **BT2** abre a célula selecionada (ou toque direto na tela).
-  5. **Perfect Time (Tempo Perfeito 5.000s):** Pressione **BT1** ou **BT2** para iniciar a contagem cega e pressione novamente para parar o cronômetro com precisão de microssegundos.
+  5. **Perfect Time (Tempo Perfeito 5.000s):** Pressione **BT1** ou **BT2** para iniciar a contagem cega e pressione novamente para parar o cronômetro com precisão de microssegundos (`time.perf_counter()`). Ao parar, a tela exibe com destaque o **tempo exato em que o jogador clicou** (ex.: `4.872 s` ou `5.134 s`), a diferença em relação a 5.000s (adiantado ou atrasado), pontuação (0 a 1000) e classificação visual, independente de acerto ou erro.
   6. **Button Frenzy (Frenesi de Cliques em 10s):** Teste de agilidade. Pressione **BT1** ou **BT2** (ou alterne rapidamente os dedos entre os dois botões físicos) para obter a maior quantidade de cliques em 10 segundos.

@@ -119,3 +119,11 @@ class InputManager:
         ret = self.solicitou_retorno_menu
         self.solicitou_retorno_menu = False
         return ret
+
+    def obter_progresso_retorno(self) -> float:
+        """Retorna o progresso de 0.0 a 1.0 do comando de segurar para retornar ao menu."""
+        if self.tempo_inicio_retorno == 0.0:
+            return 0.0
+        limite = 1.0 if (self.estado_atual["BT1"] and (self.estado_atual["BT2"] or self.estado_atual["BT4"])) else 1.5
+        tempo_decorrido = time.time() - self.tempo_inicio_retorno
+        return min(1.0, max(0.0, tempo_decorrido / limite))

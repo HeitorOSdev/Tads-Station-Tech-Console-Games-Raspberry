@@ -15,7 +15,7 @@ import pygame
 from core.hardware import HardwareManager
 from core.audio_manager import AudioManager
 from core.input_manager import InputManager
-from ui.components import HardwareLedBar
+from ui.components import SystemCommandBar
 from ui.launcher import Launcher
 
 from games.memory_master import JogoMemoryMaster
@@ -50,7 +50,7 @@ def main():
     hw = HardwareManager()
     audio = AudioManager()
     input_mgr = InputManager(hw)
-    led_bar = HardwareLedBar(y=555)
+    command_bar = SystemCommandBar(y=550)
 
     # Instanciação dos 6 jogos integrados (POO / Polimorfismo)
     jogos = [
@@ -136,8 +136,13 @@ def main():
             else:
                 jogo_ativo.renderizar(tela)
 
-        # Barra inferior unificada com status dos 5 LEDs físicos em tempo real
-        led_bar.renderizar(tela, hw.estados_leds, fonte_peq)
+        # Barra inferior de comandos do sistema (substitui os LEDs no rodapé)
+        command_bar.renderizar(
+            tela,
+            fonte_peq,
+            estado_console=estado_console,
+            progresso_retorno=input_mgr.obter_progresso_retorno()
+        )
 
         pygame.display.flip()
 
