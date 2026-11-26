@@ -23,8 +23,8 @@ class InputManager:
         # Modo de entrada atual: "TOUCH" ou "FISICO" (Alterna dinamicamente)
         self.modo_entrada = "TOUCH"
 
-        # Timer para o botão universal de saída (Segurar BT5 por 1.5 segundos)
-        self.tempo_inicio_bt5 = 0.0
+        # Timer para o botão universal de saída (Segurar BT2 por 1.5s, ou BT1+BT2 juntos, ou BT5)
+        self.tempo_inicio_retorno = 0.0
         self.solicitou_retorno_menu = False
 
     def processar(self, eventos_pygame: list[pygame.event.Event]):
@@ -79,15 +79,28 @@ class InputManager:
 
         self.borda_descida["MODO_TOUCH"] = (self.modo_entrada == "TOUCH")
 
-        # Verificação do botão de retorno ao menu (Segurar BT5 por 1.5s)
+        # Verificação do comando universal de retorno ao menu:
+        # 1. Segurar BT2 (ou BT4) por 1.5s
+        # 2. Ou pressionar BT1 + BT2 juntos por 1.0s
+        # 3. Ou segurar BT5 por 1.5s (caso ainda esteja conectado)
         agora = time.time()
-        if self.estado_atual["BT5"]:
-            if self.tempo_inicio_bt5 == 0.0:
-                self.tempo_inicio_bt5 = agora
-            elif (agora - self.tempo_inicio_bt5) >= 1.5:
+        segurando_saida = (
+            (self.estado_atual["BT1"] and (self.estado_atual["BT2"] or self.estado_atual["BT4"])) or
+            self.estado_atual["BT2"] or
+            self.estado_atual["BT4"] or
+            self.estado_atual["BT5"]
+        )
+
+        # Se ambos os botões estão pressionados, retorno rápido (1.0s)
+        limite_tempo = 1.0 if (self.estado_atual["BT1"] and (self.estado_atual["BT2"] or self.estado_atual["BT4"])) else 1.5
+
+        if segurando_saida:
+            if self.tempo_inicio_retorno == 0.0:
+                self.tempo_inicio_retorno = agora
+            elif (agora - self.tempo_inicio_retorno) >= limite_tempo:
                 self.solicitou_retorno_menu = True
         else:
-            self.tempo_inicio_bt5 = 0.0
+            self.tempo_inicio_retorno = 0.0
 
     def exibir_botoes_touch(self) -> bool:
         """Retorna True se os botões auxiliares touch devem ser desenhados na tela."""

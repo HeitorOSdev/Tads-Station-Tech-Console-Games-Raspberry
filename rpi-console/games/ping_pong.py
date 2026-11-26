@@ -21,9 +21,9 @@ from ui.components import HeaderBar, TouchButton, COLOR_BG, COLOR_PANEL, COLOR_B
 
 class JogoPingPong(Jogo):
     PONTOS_VITORIA = 5
-    VELOCIDADE_RAQUETE = 370.0  # Movimento contínuo suave (pixels por segundo)
-    VELOCIDADE_BOLA_INICIAL = 420.0
-    ACELERACAO_BOLA = 25.0
+    VELOCIDADE_RAQUETE = 230.0  # Movimento contínuo cadenciado e confortável (pixels/s)
+    VELOCIDADE_BOLA_INICIAL = 260.0  # Velocidade inicial lenta e prazerosa de jogar
+    ACELERACAO_BOLA = 12.0  # Aceleração gradual e suave por rebatida
 
     def __init__(self, hw: HardwareManager, audio: AudioManager):
         self.hw = hw
@@ -36,9 +36,9 @@ class JogoPingPong(Jogo):
         self.fundo_campo = 545
         self.altura_campo = self.fundo_campo - self.topo_campo
 
-        # Raquetes
+        # Raquetes (tamanho ajustado para melhor jogabilidade)
         self.largura_raquete = 16
-        self.altura_raquete = 110
+        self.altura_raquete = 125
         self.p1_x = 35
         self.p1_y = (self.topo_campo + self.fundo_campo) // 2 - self.altura_raquete // 2
         self.p2_x = 1024 - 35 - self.largura_raquete
@@ -97,7 +97,7 @@ class JogoPingPong(Jogo):
         self.velocidade_atual = self.VELOCIDADE_BOLA_INICIAL
 
         sentido_x = -1.0 if direcao_p1 else 1.0
-        angulo_y = random.uniform(-0.6, 0.6)
+        angulo_y = random.uniform(-0.4, 0.4)
         self.bola_vx = sentido_x * self.velocidade_atual
         self.bola_vy = angulo_y * self.velocidade_atual
 
@@ -137,15 +137,15 @@ class JogoPingPong(Jogo):
                     self.modo_touch = False
                     self._inverter_p2()
 
-        # Botões físicos: cada clique inverte a direção da respectiva raquete
+        # Botões físicos: cada clique inverte a direção da respectiva raquete (2 botões: BT1=P1, BT2=P2)
         if self.estado == "JOGANDO":
-            # P1 usa BT1 (ou BT2)
-            if estado_botoes.get("BT1") or estado_botoes.get("BT2"):
+            # P1 (Esquerda) usa BT1
+            if estado_botoes.get("BT1"):
                 self.modo_touch = False
                 self._inverter_p1()
 
-            # P2 usa BT4 (ou BT3)
-            if estado_botoes.get("BT4") or estado_botoes.get("BT3"):
+            # P2 (Direita) usa BT2 (ou BT4 / BT3)
+            if estado_botoes.get("BT2") or estado_botoes.get("BT4") or estado_botoes.get("BT3"):
                 self.modo_touch = False
                 self._inverter_p2()
 
@@ -215,12 +215,12 @@ class JogoPingPong(Jogo):
             rect_p1 = pygame.Rect(self.p1_x, int(self.p1_y), self.largura_raquete, self.altura_raquete)
             if rect_p1.collidepoint(int(self.bola_x - self.raio_bola), int(self.bola_y)) and self.bola_vx < 0:
                 self.bola_x = self.p1_x + self.largura_raquete + self.raio_bola
-                self.velocidade_atual += self.ACELERACAO_BOLA
+                self.velocidade_atual = min(self.velocidade_atual + self.ACELERACAO_BOLA, 460.0)
 
                 # Calcula o desvio angular baseado no ponto de impacto na raquete
                 delta_y = (self.bola_y - (self.p1_y + self.altura_raquete / 2)) / (self.altura_raquete / 2)
                 self.bola_vx = abs(self.velocidade_atual)
-                self.bola_vy = delta_y * self.velocidade_atual * 0.85
+                self.bola_vy = delta_y * self.velocidade_atual * 0.70
                 self.audio.tocar("acerto")
                 self.hw.set_led(0, True)
 
@@ -228,11 +228,11 @@ class JogoPingPong(Jogo):
             rect_p2 = pygame.Rect(self.p2_x, int(self.p2_y), self.largura_raquete, self.altura_raquete)
             if rect_p2.collidepoint(int(self.bola_x + self.raio_bola), int(self.bola_y)) and self.bola_vx > 0:
                 self.bola_x = self.p2_x - self.raio_bola
-                self.velocidade_atual += self.ACELERACAO_BOLA
+                self.velocidade_atual = min(self.velocidade_atual + self.ACELERACAO_BOLA, 460.0)
 
                 delta_y = (self.bola_y - (self.p2_y + self.altura_raquete / 2)) / (self.altura_raquete / 2)
                 self.bola_vx = -abs(self.velocidade_atual)
-                self.bola_vy = delta_y * self.velocidade_atual * 0.85
+                self.bola_vy = delta_y * self.velocidade_atual * 0.70
                 self.audio.tocar("acerto")
                 self.hw.set_led(1, True)
 
@@ -314,7 +314,7 @@ class JogoPingPong(Jogo):
         surf_lbl_p1 = fonte_peq.render(txt_p1, True, COLOR_CYAN)
         superficie.blit(surf_lbl_p1, (90, 520))
 
-        txt_p2 = "P2: Toque ou BT4 (Inverter)" if self.modo_touch else "P2: [BT4] Inverter Direção"
+        txt_p2 = "P2: Toque ou BT2 (Inverter)" if self.modo_touch else "P2: [BT2] Inverter Direção"
         surf_lbl_p2 = fonte_peq.render(txt_p2, True, COLOR_RED)
         superficie.blit(surf_lbl_p2, (740, 520))
 

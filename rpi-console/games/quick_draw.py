@@ -187,10 +187,10 @@ class JogoQuickDraw(Jogo):
         pygame.draw.rect(superficie, cor_p2, self.rect_p2, border_radius=16)
         pygame.draw.rect(superficie, COLOR_CYAN, self.rect_p2, width=2, border_radius=16)
 
-        surf_p2 = fonte_med.render("JOGADOR 2 (BT4)", True, COLOR_CYAN)
+        surf_p2 = fonte_med.render("JOGADOR 2 (BT2)", True, COLOR_CYAN)
         superficie.blit(surf_p2, surf_p2.get_rect(center=(self.rect_p2.centerx, 130)))
 
-        txt_p2 = "ARMADO!" if self.p2_pronto else ("TOQUE OU APERTE BT4" if self.modo_touch else "PRESSIONE BT4")
+        txt_p2 = "ARMADO!" if self.p2_pronto else ("TOQUE OU APERTE BT2" if self.modo_touch else "PRESSIONE BT2")
         if self.p2_tempo_ms is not None: txt_p2 = f"{self.p2_tempo_ms} ms"
         surf_status_p2 = fonte_med.render(txt_p2, True, COLOR_TEXT)
         superficie.blit(surf_status_p2, surf_status_p2.get_rect(center=(self.rect_p2.centerx, 300)))

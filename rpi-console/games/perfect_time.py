@@ -83,13 +83,17 @@ class JogoPerfectTime(Jogo):
                 if self.btn_gatilho.rect.collidepoint(pos):
                     self._acionar()
 
-        # Botão físico BT1 (Pino 11)
-        if estado_botoes.get("BT1"):
+        # Botão físico BT1 ou BT2
+        if estado_botoes.get("BT1") or estado_botoes.get("BT2"):
             self.modo_touch = False
             self._acionar()
 
     def _acionar(self):
         agora = time.perf_counter()
+
+        if self.estado == "RESULTADO":
+            self.iniciar()
+            return
 
         if self.estado == "AGUARDANDO":
             # Inicia contagem cega
@@ -168,9 +172,11 @@ class JogoPerfectTime(Jogo):
 
         # Atualiza rótulo dinâmico baseado no modo de entrada (Físico vs Touch)
         if self.estado == "AGUARDANDO":
-            self.btn_gatilho.texto = "TOQUE NA TELA\nPARA INICIAR" if self.modo_touch else "PRESSIONE BT1\nPARA INICIAR"
+            self.btn_gatilho.texto = "TOQUE NA TELA\nPARA INICIAR" if self.modo_touch else "PRESSIONE [BT1]\nPARA INICIAR"
         elif self.estado == "ESTIMANDO":
-            self.btn_gatilho.texto = "CONTAGEM ATIVA!\nTOQUE PARA PARAR" if self.modo_touch else "CONTAGEM ATIVA!\nAPERTE BT1 PARA PARAR"
+            self.btn_gatilho.texto = "CONTAGEM ATIVA!\nTOQUE PARA PARAR" if self.modo_touch else "CONTAGEM ATIVA!\nAPERTE [BT1] P/ PARAR"
+        elif self.estado == "RESULTADO":
+            self.btn_gatilho.texto = "TOQUE P/ RECOMEÇAR" if self.modo_touch else "APERTE [BT1] P/ RECOMEÇAR"
 
         # Botão / Painel de Acionamento Central
         self.btn_gatilho.renderizar(superficie, fonte_med)

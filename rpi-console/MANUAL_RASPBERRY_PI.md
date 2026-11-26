@@ -3,39 +3,36 @@
 
 ---
 
-## 1. Visão Geral do Console (7 Jogos 100% Digitais)
+## 1. Visão Geral do Console (6 Jogos 100% Digitais)
 
 O **Tech Arcade Console** é uma plataforma de entretenimento de alta performance, 100% digital e sem a necessidade de conversores analógicos ou chips externos complexos.
 
-O console integra **sete jogos completos**, operando a 60 FPS com gráficos acelerados por hardware (Pygame-CE), áudio estéreo sintetizado e controle unificado por **5 Botões Físicos + Tela Touchscreen 1024x600**:
+O console integra **seis jogos completos**, operando a 60 FPS com gráficos acelerados por hardware (Pygame-CE), áudio estéreo sintetizado e controle unificado por **2 Botões Físicos + Tela Touchscreen 1024x600**:
 
-1. **Memory Master:** Desafio da memória clássico ("Genius") com 4 cores sonoras e visuais progressivas.
-2. **Quick Draw:** Duelo de reflexos para 2 participantes com tela dividida, queima de largada e medição em milissegundos.
-3. **Steady Hands:** Pista de arame condutor com proteção contra estática (ESD), 3 vidas, cronômetro de precisão e alarme.
-4. **Campo Minado:** 5 cápsulas táteis com 2 minas sorteadas e efeitos visuais/sonoros de explosão e vitória.
+1. **Memory Master:** Desafio da memória clássico ("Genius") com 4 LEDs físicos e repetição touch.
+2. **Ping Pong Arcade:** Clássico Pong para 2 jogadores (P1 vs P2) com movimento contínuo cadenciado e botões touch translúcidos.
+3. **Quick Draw:** Duelo de reflexos para 2 participantes com queima de largada e medição em milissegundos.
+4. **Campo Minado:** Campo clássico em grade 3x4 (12 células) com 3 minas e pistas numéricas para dedução lógica. Primeiro clique 100% seguro.
 5. **Perfect Time:** Desafio de percepção temporal de 5.000 segundos com medição em microssegundos (`time.perf_counter()`).
 6. **Button Frenzy:** Teste de agilidade e velocidade: maior quantidade de cliques em 10 segundos com cálculo de CPS.
-7. **Ping Pong Arcade:** Clássico Pong para 2 jogadores (P1 vs P2) com física real, aceleração da bola e disputa até 5 pontos.
 
 ---
 
 ## 2. Lista de Materiais e Componentes (Simples e Acessíveis)
 
 > [!TIP]
-> **Sobre as cores dos botões:** Os botões físicos **NÃO precisam ser coloridos**! Quaisquer 5 pushbuttons normais pretos ou da mesma cor funcionam perfeitamente, pois a tela Touch e os LEDs já realizam toda a identificação visual.
+> **Sobre os botões:** Agora o console necessita de apenas **2 botões físicos** (`BT1` e `BT2`) para navegar por todos os menus e jogar todas as modalidades! O jogo do arame foi descontinuado, dispensando arames e resistores adicionais.
 
 | Item | Componente | Quantidade | Função no Console |
 | :---: | :--- | :---: | :--- |
-| **1** | **Raspberry Pi 3 B+** | 1 | Processamento central, engine Pygame e áudio |
-| **2** | **Display Touch 7" HDMI IPS (1024x600)** | 1 | Interface visual e tela touch capacitiva/resistiva |
-| **3** | **Cartão MicroSD 8GB, 16GB ou 32GB** | 1 | Armazenamento do sistema operacional e jogos |
-| **4** | **Pushbuttons comuns (6x6mm, 12x12mm ou arcade)** | 5 | BT1, BT2, BT3, BT4 e BT5 *(qualquer cor serve)* |
-| **5** | **LEDs Difusos 5mm** | 5 | 1 Vermelho, 1 Verde, 1 Azul, 1 Amarelo, 1 Laranja |
-| **6** | **Resistores para os LEDs (3.3V)** | 5 | 3x 270 Ω (Verm/Amar/Laranja), 1x 220 Ω (Verde), 1x 100 Ω (Azul) |
-| **7** | **Resistor de Proteção ESD** | 1 | 1x 1 kΩ (em série com a pista de arame) |
-| **8** | **Arame Rígido + Argola Metálica** | 1 conjunto | Pista do jogo *Steady Hands* |
-| **9** | **Protoboard + Jumpers Macho-Fêmea** | 1 conjunto | Montagem das conexões |
-| **10**| **Fonte de Alimentação 5V / 3.0A (Micro-USB)** | 1 | Alimentação estável do conjunto |
+| **1** | **Raspberry Pi 3 B / 3 B+** | 1 | Processamento central, engine Pygame e áudio |
+| **2** | **Display Touch 7" HDMI IPS (1024x600)** | 1 | Interface visual e tela touch |
+| **3** | **Cartão MicroSD 8GB ou superior** | 1 | Armazenamento do sistema operacional e jogos |
+| **4** | **Pushbuttons comuns (6x6mm, 12x12mm ou arcade)** | 2 | BT1 (Pino 29) e BT2 (Pino 31) |
+| **5** | **LEDs Difusos 5mm** | 4 | 4 LEDs do Genius (Pinos 11, 13, 15, 16) |
+| **6** | **Resistores para os LEDs (3.3V)** | 4 | 2x 270 Ω (Verm/Amar), 1x 220 Ω (Verde), 1x 100 Ω (Azul) |
+| **7** | **Protoboard + Jumpers Macho-Fêmea** | 1 conjunto | Montagem das conexões |
+| **8** | **Fonte de Alimentação 5V / 2.5A ou 3.0A (Micro-USB)** | 1 | Alimentação estável do conjunto |
 
 ---
 
@@ -166,20 +163,21 @@ Para que o console ligue direto no menu do console sem exibir a área de trabalh
 
 ---
 
-## 8. Guia Rápido de Operação dos 7 Jogos
+## 8. Guia Rápido de Operação dos 6 Jogos (Sistema Otimizado para 2 Botões)
 
-* **Navegação no Menu:** Botão **BT2** (Anterior), **BT3** (Próximo) e **BT5** (Confirmar/Entrar). Também pode usar o toque direto na tela.
-* **Ocultação Inteligente de Toque:** Ao acionar qualquer botão físico, os botões virtuais da tela somem automaticamente para uma experiência arcade autêntica (com exceção do Jogo da Memória, botão `VOLTAR` e botão `DESLIGAR`).
-* **Desligamento Seguro por Toque:** Botão vermelho **DESLIGAR** no topo direito da tela touch do menu. Ao tocar nele, uma janela de confirmação surge; confirmando, o sistema desliga o hardware e o sistema operacional com segurança sem risco de corromper o MicroSD.
-* **Botão Universal de Pânico:** Segurar o **Botão 5 por 1,5 segundos** em qualquer jogo aborta a partida e retorna ao menu.
-* **Controles dos Jogos:**
-  1. **Memory Master:** A sequência pisca exclusivamente nos 4 LEDs físicos (Vermelho, Verde, Azul, Amarelo). A tela funciona como painel de status e interface touch (BT1..BT4 ou quadrantes coloridos).
-  2. **Quick Draw:** Duelo 2P. P1 usa BT1 (esquerda) e P2 usa BT4 (direita - ergonômico, cada jogador em uma ponta).
-  3. **Steady Hands:** BT3 (Início), BT4 (Fim) e pista de arame condutor (GPIO 16).
-  4. **Campo Minado:** Botões BT1..BT5 ou toque direto nas 5 cápsulas.
-  5. **Perfect Time:** BT1 inicia e para o cronômetro com latência zero (disparo instantâneo no toque ou clique).
-  6. **Button Frenzy:** BT1 ou tamborilar de dedos na tela por 10 segundos com registro ágil de CPS.
-  7. **Ping Pong Arcade:** Duelo 2P de Ping Pong até 5 pontos:
-     * **Movimento Contínuo:** As raquetes se movimentam sozinhas e rebatem automaticamente nas bordas superior e inferior.
-     * **Controle por Inversão:** Um toque no botão físico (**BT1** ou **BT2**) inverte instantaneamente a direção da raquete do Jogador 1 (Esquerda). Um toque em **BT3** ou **BT4** inverte a do Jogador 2 (Direita).
-     * **Controles Touch Translúcidos:** Áreas touch semitransparentes no centro de cada campo permitem que os jogadores toquem na tela para inverter o sentido das raquetes sem obstruir a visão da bola.
+* **Navegação no Menu com 2 Botões:**
+  * **BT1 (Pino Físico 29 / BCM 5):** Alterna ciclicamente para o próximo jogo no carrossel (PRÓXIMO >).
+  * **BT2 (Pino Físico 31 / BCM 6):** Seleciona e inicia o jogo em destaque (JOGAR AGORA!).
+  * Também é possível navegar e selecionar por toque direto na tela touch.
+* **Retorno Universal ao Menu:**
+  * Segurar o **BT2 por 1,5 segundos** (ou pressionar **BT1 + BT2 juntos por 1 segundo**) durante qualquer partida aborta o jogo e retorna ao menu.
+  * O botão VOLTAR no topo da tela touch também permanece sempre acessível.
+* **Desligamento Seguro:**
+  * Toque no botão vermelho **DESLIGAR** no topo direito da tela touch do menu. No modal de confirmação: **BT1 Cancela** e **BT2 Confirma** o desligamento seguro do sistema.
+* **Controles dos 6 Jogos:**
+  1. **Memory Master (Genius das Cores):** A sequência de cores pisca nos 4 LEDs físicos (Pinos 11, 13, 15, 16). O jogador responde tocando diretamente nos quadrantes coloridos da tela touch.
+  2. **Ping Pong Arcade (Duelo 2P):** Raquetes com movimento contínuo e velocidade cadenciada. O Jogador 1 (Esquerda) usa **BT1** (ou toque na metade esquerda) e o Jogador 2 (Direita) usa **BT2** (ou toque na metade direita) para inverter o sentido das raquetes.
+  3. **Quick Draw (Duelo de Reação 2P):** Duelo rápido de faroeste. O Jogador 1 usa **BT1** e o Jogador 2 usa **BT2** (ou toque em cada lado da tela).
+  4. **Campo Minado (Dedução Lógica Clássica):** Grade 3x4 (12 células) com 3 minas e pistas numéricas vizinhas (1, 2, 3...). O primeiro clique é sempre seguro e revela caminhos em cadeia. **BT1** move o cursor luminoso e **BT2** abre a célula selecionada (ou toque direto na tela).
+  5. **Perfect Time (Tempo Perfeito 5.000s):** Pressione **BT1** ou **BT2** para iniciar a contagem cega e pressione novamente para parar o cronômetro com precisão de microssegundos.
+  6. **Button Frenzy (Frenesi de Cliques em 10s):** Teste de agilidade. Pressione **BT1** ou **BT2** (ou alterne rapidamente os dedos entre os dois botões físicos) para obter a maior quantidade de cliques em 10 segundos.

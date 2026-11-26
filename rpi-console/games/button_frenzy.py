@@ -84,12 +84,16 @@ class JogoButtonFrenzy(Jogo):
                 if self.btn_frenzy.rect.collidepoint(pos):
                     self._tratar_clique()
 
-        # Botão físico BT1 (Pino 11)
-        if estado_botoes.get("BT1"):
+        # Botão físico BT1 ou BT2 (permite alternar dedos rapidamente entre os dois botões)
+        if estado_botoes.get("BT1") or estado_botoes.get("BT2"):
             self.modo_touch = False
             self._tratar_clique()
 
     def _tratar_clique(self):
+        if self.estado == "RESULTADO":
+            self.iniciar()
+            return
+
         if self.estado == "AGUARDANDO":
             # Inicia a contagem regressiva de 3 segundos
             self.estado = "CONTAGEM"
@@ -170,7 +174,9 @@ class JogoButtonFrenzy(Jogo):
 
         # Ajuste de texto baseado no modo de entrada (Touch vs Físico)
         if self.estado == "AGUARDANDO":
-            self.btn_frenzy.texto = "TOQUE PARA INICIAR\n(10 SEGUNDOS)" if self.modo_touch else "PRESSIONE BT1 PARA INICIAR\n(10 SEGUNDOS)"
+            self.btn_frenzy.texto = "TOQUE PARA INICIAR\n(10 SEGUNDOS)" if self.modo_touch else "PRESSIONE [BT1/BT2] P/ INICIAR\n(10 SEGUNDOS)"
+        elif self.estado == "RESULTADO":
+            self.btn_frenzy.texto = "TOQUE P/ RECOMEÇAR" if self.modo_touch else "APERTE [BT1/BT2] P/ NOVO RECORDE"
 
         # Botão / Painel de Toque Central
         if self.estado == "CONTAGEM":

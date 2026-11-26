@@ -13,25 +13,25 @@ from ui.components import TouchButton, HeaderBar, COLOR_BG, COLOR_PANEL, COLOR_B
 
 
 class Launcher:
-    """Menu Arcade moderno em tela cheia com cartões touch para 7 jogos."""
+    """Menu Arcade moderno em tela cheia com cartões touch para 6 jogos."""
 
     def __init__(self, lista_jogos: list[Jogo]):
         self.jogos = lista_jogos
         self.indice_selecionado = 0
-        self.header = HeaderBar("TECH ARCADE CONSOLE — 7 JOGOS", botao_voltar=False, botao_desligar=True)
+        self.header = HeaderBar("TECH ARCADE CONSOLE — 6 JOGOS", botao_voltar=False, botao_desligar=True)
 
         # Modal de desligamento seguro
         self.modal_desligar = False
-        self.btn_confirmar_desligar = TouchButton(290, 325, 200, 52, "SIM, DESLIGAR", (255, 60, 90))
-        self.btn_cancelar_desligar = TouchButton(534, 325, 200, 52, "CANCELAR", COLOR_CYAN)
+        self.btn_confirmar_desligar = TouchButton(290, 325, 200, 52, "SIM, DESLIGAR [BT2]", (255, 60, 90))
+        self.btn_cancelar_desligar = TouchButton(534, 325, 200, 52, "CANCELAR [BT1]", COLOR_CYAN)
 
         # Botões de navegação por toque na base
-        self.btn_anterior = TouchButton(60, 480, 220, 56, "< ANTERIOR (BT2)", COLOR_CYAN)
-        self.btn_jogar = TouchButton(362, 475, 300, 66, "JOGAR AGORA! (BT5)", COLOR_GREEN)
-        self.btn_proximo = TouchButton(744, 480, 220, 56, "PRÓXIMO > (BT3)", COLOR_CYAN)
+        self.btn_anterior = TouchButton(60, 480, 220, 56, "< ANTERIOR", COLOR_CYAN)
+        self.btn_jogar = TouchButton(362, 475, 300, 66, "JOGAR AGORA! [BT2]", COLOR_GREEN)
+        self.btn_proximo = TouchButton(744, 480, 220, 56, "PRÓXIMO > [BT1]", COLOR_CYAN)
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], input_mgr) -> Jogo | str | None:
-        """Processa interações de toque e botões físicos da GPIO."""
+        """Processa interações de toque e comandos com 2 botões físicos."""
         # Se o diálogo de desligar estiver aberto, captura apenas as ações dele
         if self.modal_desligar:
             for evento in eventos_pygame:
@@ -46,20 +46,21 @@ class Launcher:
                 elif evento.type == pygame.KEYDOWN and evento.key in (pygame.K_RETURN, pygame.K_s):
                     return "DESLIGAR"
 
-            if input_mgr.foi_pressionado("BT5"):
+            # 2 Botões no diálogo de desligamento: BT1 Cancela, BT2 Confirma
+            if input_mgr.foi_pressionado("BT2") or input_mgr.foi_pressionado("BT4") or input_mgr.foi_pressionado("BT5"):
                 return "DESLIGAR"
-            if input_mgr.foi_pressionado("BT1") or input_mgr.foi_pressionado("BT2"):
+            if input_mgr.foi_pressionado("BT1") or input_mgr.foi_pressionado("BT3"):
                 self.modal_desligar = False
             return None
 
-        # 1. Comandos Físicos da GPIO
-        if input_mgr.foi_pressionado("BT2"):
-            self.indice_selecionado = (self.indice_selecionado - 1) % len(self.jogos)
-
-        if input_mgr.foi_pressionado("BT3"):
+        # 1. Comandos Físicos da GPIO (2 Botões: BT1 = Próximo, BT2 = Jogar)
+        if input_mgr.foi_pressionado("BT1"):
             self.indice_selecionado = (self.indice_selecionado + 1) % len(self.jogos)
 
-        if input_mgr.foi_pressionado("BT5"):
+        if input_mgr.foi_pressionado("BT3"):
+            self.indice_selecionado = (self.indice_selecionado - 1) % len(self.jogos)
+
+        if input_mgr.foi_pressionado("BT2") or input_mgr.foi_pressionado("BT4") or input_mgr.foi_pressionado("BT5"):
             return self.jogos[self.indice_selecionado]
 
         # 2. Interações por Toque na Tela Touch
@@ -142,7 +143,7 @@ class Launcher:
                     # Badge central
                     badge_rect = pygame.Rect(cx - 130, cy + 95, 260, 44)
                     pygame.draw.rect(superficie, (20, 50, 85), badge_rect, border_radius=8)
-                    txt_badge = "TOQUE PARA INICIAR (BT5)" if exibir_touch else "PRESSIONE BT5 PARA JOGAR"
+                    txt_badge = "TOQUE PARA INICIAR" if exibir_touch else "PRESSIONE [BT2] PARA JOGAR"
                     surf_badge = fonte_peq.render(txt_badge, True, COLOR_YELLOW)
                     superficie.blit(surf_badge, surf_badge.get_rect(center=badge_rect.center))
 
@@ -167,7 +168,7 @@ class Launcher:
             rect_hud = pygame.Rect(112, 492, 800, 38)
             pygame.draw.rect(superficie, (18, 22, 36), rect_hud, border_radius=8)
             pygame.draw.rect(superficie, COLOR_BORDER, rect_hud, width=1, border_radius=8)
-            surf_hud = fonte_peq.render("[BT2] ANTERIOR     |     [BT5] JOGAR     |     [BT3] PRÓXIMO", True, COLOR_TEXT_DIM)
+            surf_hud = fonte_peq.render("[BT1] PRÓXIMO JOGO     |     [BT2] JOGAR AGORA", True, COLOR_TEXT_DIM)
             superficie.blit(surf_hud, surf_hud.get_rect(center=rect_hud.center))
 
         # Diálogo Modal de Desligamento Seguro

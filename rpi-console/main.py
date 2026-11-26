@@ -20,7 +20,6 @@ from ui.launcher import Launcher
 
 from games.memory_master import JogoMemoryMaster
 from games.quick_draw import JogoQuickDraw
-from games.steady_hands import JogoSteadyHands
 from games.minefield import JogoCampoMinado
 from games.perfect_time import JogoPerfectTime
 from games.button_frenzy import JogoButtonFrenzy
@@ -40,7 +39,7 @@ def main():
     except Exception:
         tela = pygame.display.set_mode((LARGURA, ALTURA))
 
-    pygame.display.set_caption("Tech Arcade Console 7'' — 7 Jogos")
+    pygame.display.set_caption("Tech Arcade Console 7'' — 6 Jogos")
 
     # Fontes padronizadas do sistema
     fonte_tit = pygame.font.SysFont("arial", 22, bold=True)
@@ -53,15 +52,14 @@ def main():
     input_mgr = InputManager(hw)
     led_bar = HardwareLedBar(y=555)
 
-    # Instanciação dos 7 jogos integrados (POO / Polimorfismo)
+    # Instanciação dos 6 jogos integrados (POO / Polimorfismo)
     jogos = [
+        JogoPingPong(hw, audio),
         JogoMemoryMaster(hw, audio),
         JogoQuickDraw(hw, audio),
-        JogoSteadyHands(hw, audio),
         JogoCampoMinado(hw, audio),
         JogoPerfectTime(hw, audio),
-        JogoButtonFrenzy(hw, audio),
-        JogoPingPong(hw, audio)
+        JogoButtonFrenzy(hw, audio)
     ]
 
     launcher = Launcher(jogos)

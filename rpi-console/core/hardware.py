@@ -61,9 +61,6 @@ class HardwareManager:
                 for pino in self.PINOS_LEDS:
                     self.leds.append(LED(pino))
 
-                # Sensor do arame com resistor de proteção
-                self.sensor_arame = Button(self.PINO_ARAME, pull_up=True, bounce_time=0.04)
-
                 print("[HARDWARE] Raspberry Pi 3 B+ GPIO inicializado com sucesso (Modo 100% Digital).")
             except Exception as e:
                 print(f"[HARDWARE ALERTA] Falha ao acessar GPIO real ({e}). Alternando para modo Simulação.")
