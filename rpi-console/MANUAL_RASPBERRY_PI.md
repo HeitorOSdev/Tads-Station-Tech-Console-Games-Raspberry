@@ -175,8 +175,8 @@ Para que o console ligue direto no menu do console sem exibir a área de trabalh
 * **Desligamento Seguro:**
   * Toque no botão vermelho **DESLIGAR** no topo direito da tela touch do menu. No modal de confirmação: **BT1 Cancela** e **BT2 Confirma** o desligamento seguro do sistema.
 * **Controles dos 6 Jogos:**
-  1. **Memory Master (Genius das Cores):** A sequência de cores pisca nos 4 LEDs físicos (Pinos 11, 13, 15, 16). O jogador responde tocando diretamente nos quadrantes coloridos da tela touch.
-  2. **Ping Pong Arcade (Duelo 2P):** Raquetes com movimento contínuo e velocidade cadenciada. O Jogador 1 (Esquerda) usa **BT1** (ou toque na metade esquerda) e o Jogador 2 (Direita) usa **BT2** (ou toque na metade direita) para inverter o sentido das raquetes.
+  1. **Memory Master (Genius das Cores):** Modos "COM LEDS" (padrão) e "SEM LEDS" (as cores brilham visualmente na tela, permitindo jogar apenas pelo display). Os LEDs físicos (Pinos 11, 13, 15, 16) continuam sempre ativos. Na resposta, use o seletor com 2 botões (**BT1** move o seletor entre as cores, **BT2** escolhe) ou toque direto nos quadrantes touch.
+  2. **Ping Pong Arcade (Duelo 2P):** Raquetes contínuas e ritmo acelerado da bola (início dinâmico a 320 px/s e raquete a 270 px/s). O Jogador 1 (Esquerda) usa **BT1** (ou toque na metade esquerda) e o Jogador 2 (Direita) usa **BT2** (ou toque na metade direita) para inverter o sentido das raquetes.
   3. **Quick Draw (Duelo de Reação 2P):** Duelo rápido de faroeste. O Jogador 1 usa **BT1** e o Jogador 2 usa **BT2** (ou toque em cada lado da tela).
   4. **Campo Minado (Dedução Lógica Clássica):** Grade 3x4 (12 células) com 3 minas e pistas numéricas vizinhas (1, 2, 3...). O primeiro clique é sempre seguro e revela caminhos em cadeia. **BT1** move o cursor luminoso e **BT2** abre a célula selecionada (ou toque direto na tela).
   5. **Perfect Time (Tempo Perfeito 5.000s):** Pressione **BT1** ou **BT2** para iniciar a contagem cega e pressione novamente para parar o cronômetro com precisão de microssegundos.

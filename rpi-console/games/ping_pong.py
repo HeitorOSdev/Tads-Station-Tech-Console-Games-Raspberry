@@ -21,9 +21,9 @@ from ui.components import HeaderBar, TouchButton, COLOR_BG, COLOR_PANEL, COLOR_B
 
 class JogoPingPong(Jogo):
     PONTOS_VITORIA = 5
-    VELOCIDADE_RAQUETE = 230.0  # Movimento contínuo cadenciado e confortável (pixels/s)
-    VELOCIDADE_BOLA_INICIAL = 260.0  # Velocidade inicial lenta e prazerosa de jogar
-    ACELERACAO_BOLA = 12.0  # Aceleração gradual e suave por rebatida
+    VELOCIDADE_RAQUETE = 270.0  # Movimento contínuo ágil e responsivo (pixels/s)
+    VELOCIDADE_BOLA_INICIAL = 320.0  # Velocidade inicial acelerada e dinâmica (+23%)
+    ACELERACAO_BOLA = 16.0  # Aceleração equilibrada por rebatida
 
     def __init__(self, hw: HardwareManager, audio: AudioManager):
         self.hw = hw

@@ -1,10 +1,16 @@
 """
 Jogo 1: Memory Master (Desafio da Memória - Genius 4 Cores).
-Apresenta 4 setores coloridos táteis na tela 1024x600 sincronizados com os 4 botões e LEDs físicos:
-- Cor 0 (Vermelho): BT1 / LED1 / Nota Dó (262 Hz)
-- Cor 1 (Verde): BT2 / LED2 / Nota Mi (330 Hz)
-- Cor 2 (Azul): BT3 / LED3 / Nota Sol (392 Hz)
-- Cor 3 (Amarelo): BT4 / LED4 / Nota Dó Agudo (523 Hz)
+Apresenta 4 setores coloridos na tela 1024x600 sincronizados com os 4 LEDs físicos:
+- Cor 0 (Vermelho): LED1 (Pino 11 / BCM 17) / Nota Dó
+- Cor 1 (Verde):    LED2 (Pino 13 / BCM 27) / Nota Mi
+- Cor 2 (Azul):     LED3 (Pino 15 / BCM 22) / Nota Sol
+- Cor 3 (Amarelo):  LED4 (Pino 16 / BCM 23) / Nota Dó Agudo
+
+Recursos:
+- Opção "COM LEDS" (padrão com LEDs físicos) e "SEM LEDS" (cores piscam visualmente na tela)
+- Os LEDs físicos continuam acionados normalmente em ambos os modos
+- Seletor de 2 Botões físicos no modo jogador: BT1 = Mover seletor, BT2 = Escolher
+- Suporte simultâneo a toque direto nos quadrantes da tela touch
 """
 
 import random
@@ -13,7 +19,7 @@ import pygame
 from core.game_interface import Jogo
 from core.hardware import HardwareManager
 from core.audio_manager import AudioManager
-from ui.components import HeaderBar, COLOR_BG, COLOR_PANEL, COLOR_BORDER, COLOR_TEXT, COLOR_TEXT_DIM, COLOR_YELLOW, COLOR_CYAN
+from ui.components import HeaderBar, TouchButton, COLOR_BG, COLOR_PANEL, COLOR_BORDER, COLOR_TEXT, COLOR_TEXT_DIM, COLOR_YELLOW, COLOR_CYAN, COLOR_GREEN, COLOR_RED
 
 
 class JogoMemoryMaster(Jogo):
@@ -24,12 +30,12 @@ class JogoMemoryMaster(Jogo):
         (240, 200, 30)    # 3: Amarelo
     ]
     CORES_BRILHO = [
-        (255, 120, 140),
-        (120, 255, 160),
-        (120, 190, 255),
-        (255, 240, 120)
+        (255, 130, 150),
+        (130, 255, 170),
+        (130, 200, 255),
+        (255, 245, 140)
     ]
-    NOMES_CORES = ["VERMELHO (BT1)", "VERDE (BT2)", "AZUL (BT3)", "AMARELO (BT4)"]
+    NOMES_CORES = ["VERMELHO", "VERDE", "AZUL", "AMARELO"]
 
     def __init__(self, hw: HardwareManager, audio: AudioManager):
         self.hw = hw
@@ -49,12 +55,20 @@ class JogoMemoryMaster(Jogo):
         self.led_ativo = False
         self.ultimo_toque = 0.0
 
-        # Zonas de toque nos 4 quadrantes
+        # Modo Sem LEDs (permite jogar olhando apenas para a tela)
+        self.modo_sem_leds = False
+        self.btn_modo = TouchButton(750, 70, 230, 38, "MODO: COM LEDS", (20, 50, 85))
+
+        # Seletor com 2 botões físicos: BT1 move, BT2 escolhe
+        self.seletor_cor = 0
+        self.modo_touch = True
+
+        # Zonas de toque nos 4 quadrantes coloridos
         self.quadrantes = [
-            pygame.Rect(262, 110, 240, 180),  # Top-Left (Vermelho - BT1 / LED1)
-            pygame.Rect(522, 110, 240, 180),  # Top-Right (Verde - BT2 / LED2)
-            pygame.Rect(262, 310, 240, 180),  # Bottom-Left (Azul - BT3 / LED3)
-            pygame.Rect(522, 310, 240, 180)   # Bottom-Right (Amarelo - BT4 / LED4)
+            pygame.Rect(262, 120, 240, 175),  # Top-Left (0: Vermelho)
+            pygame.Rect(522, 120, 240, 175),  # Top-Right (1: Verde)
+            pygame.Rect(262, 315, 240, 175),  # Bottom-Left (2: Azul)
+            pygame.Rect(522, 315, 240, 175)   # Bottom-Right (3: Amarelo)
         ]
 
     def get_id(self) -> str:
@@ -64,7 +78,7 @@ class JogoMemoryMaster(Jogo):
         return "Memory Master"
 
     def get_descricao(self) -> str:
-        return "Observe a sequência nos 4 LEDs físicos e repita pelos botões ou pelo touch."
+        return "Desafio Genius: memorize a sequência nos LEDs ou na tela e use o seletor de 2 botões ou toque!"
 
     def iniciar(self) -> None:
         self.retorno_menu = False
@@ -72,6 +86,7 @@ class JogoMemoryMaster(Jogo):
         self.rodada = 1
         self.passo_seq = 0
         self.passo_jogador = 0
+        self.seletor_cor = 0
         self.estado = "MOSTRANDO"
         self.timer_estado = time.time() + 0.8
         self.cor_ativa = -1
@@ -80,33 +95,53 @@ class JogoMemoryMaster(Jogo):
         self.hw.apagar_leds()
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
+        if "MODO_TOUCH" in estado_botoes:
+            self.modo_touch = estado_botoes["MODO_TOUCH"]
+
         agora = time.time()
         for evento in eventos_pygame:
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
 
-            # Clique ou toque nos quadrantes coloridos (com debounce de 200ms contra eventos duplicados)
+            # Botão de alternância de modo (COM LEDS vs SEM LEDS)
+            if self.btn_modo.processar_evento(evento):
+                self.modo_sem_leds = not self.modo_sem_leds
+                txt = "MODO: SEM LEDS (TELA)" if self.modo_sem_leds else "MODO: COM LEDS"
+                cor = (90, 40, 100) if self.modo_sem_leds else (20, 50, 85)
+                self.btn_modo.texto = txt
+                self.btn_modo.cor_normal = cor
+                self.audio.tocar("menu_move")
+
+            # Toque direto nos 4 quadrantes coloridos
             if self.estado == "JOGADOR" and evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
-                if agora - self.ultimo_toque >= 0.20:
+                self.modo_touch = True
+                if agora - self.ultimo_toque >= 0.18:
                     pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
                     for i, rect in enumerate(self.quadrantes):
                         if rect.collidepoint(pos):
                             self.ultimo_toque = agora
+                            self.seletor_cor = i
                             self._registrar_jogada(i)
                             break
 
-        # Processamento de botões físicos da GPIO (BT1=0, BT2=1, BT3=2, BT4=3)
+        # Controles Físicos com 2 Botões no modo Jogador:
+        # BT1: Move o seletor entre as 4 cores
+        # BT2: Confirma / Escolhe a cor selecionada
         if self.estado == "JOGADOR":
-            if estado_botoes.get("BT1"): self._registrar_jogada(0)
-            elif estado_botoes.get("BT2"): self._registrar_jogada(1)
-            elif estado_botoes.get("BT3"): self._registrar_jogada(2)
-            elif estado_botoes.get("BT4"): self._registrar_jogada(3)
+            if estado_botoes.get("BT1"):
+                self.modo_touch = False
+                self.seletor_cor = (self.seletor_cor + 1) % 4
+                self.audio.tocar("menu_move")
+
+            if estado_botoes.get("BT2") or estado_botoes.get("BT4") or estado_botoes.get("BT5"):
+                self.modo_touch = False
+                self._registrar_jogada(self.seletor_cor)
 
     def _registrar_jogada(self, cor: int):
         self.cor_ativa = cor
         self.hw.set_led(cor, True)
         self.audio.tocar(f"genius_{cor}")
-        self.timer_estado = time.time() + 0.25
+        self.timer_estado = time.time() + 0.30
 
         if cor == self.sequencia[self.passo_jogador]:
             self.passo_jogador += 1
@@ -138,11 +173,17 @@ class JogoMemoryMaster(Jogo):
             if not self.led_ativo:
                 if agora >= self.timer_estado:
                     cor = self.sequencia[self.passo_seq]
-                    # Pisca EXCLUSIVAMENTE o LED físico correspondente (A tela permanece sem acender)
-                    self.cor_ativa = -1
+                    # Os LEDs físicos SEMPRE acendem em ambos os modos
                     self.hw.set_led(cor, True)
                     self.audio.tocar(f"genius_{cor}")
                     self.led_ativo = True
+
+                    # No modo "SEM LEDS", a cor também brilha na tela
+                    if self.modo_sem_leds:
+                        self.cor_ativa = cor
+                    else:
+                        self.cor_ativa = -1
+
                     self.timer_estado = agora + intervalo
             else:
                 if agora >= self.timer_estado:
@@ -158,7 +199,7 @@ class JogoMemoryMaster(Jogo):
                         self.timer_estado = agora + 6.0  # 6 segundos para responder
 
         elif self.estado == "JOGADOR":
-            # Apaga o destaque visual do toque após pequeno delay de feedback
+            # Apaga o destaque visual do toque após o feedback
             if self.cor_ativa != -1 and agora >= self.timer_estado:
                 self.hw.apagar_leds()
                 self.cor_ativa = -1
@@ -167,6 +208,7 @@ class JogoMemoryMaster(Jogo):
             if agora >= self.timer_estado and self.cor_ativa == -1:
                 self.estado = "DERROTA"
                 self.audio.tocar("erro")
+                self.hw.acender_leds()
                 self.timer_estado = agora + 2.5
 
         elif self.estado == "ACERTO":
@@ -189,12 +231,21 @@ class JogoMemoryMaster(Jogo):
 
         self.header.renderizar(superficie, fonte_tit, fonte_peq)
 
-        # Painel de Status Dinâmico (A tela orienta e diz se acertou ou errou)
+        # Botão Touch de Alternância de Modo (Com LEDs vs Sem LEDs)
+        self.btn_modo.renderizar(superficie, fonte_peq)
+
+        # Painel de Status Central
         if self.estado == "MOSTRANDO":
-            txt_status = "👀 OBSERVE A SEQUÊNCIA NOS 4 LEDS FÍSICOS!"
+            if self.modo_sem_leds:
+                txt_status = "👀 OBSERVE A SEQUÊNCIA NA TELA!"
+            else:
+                txt_status = "👀 OBSERVE A SEQUÊNCIA NOS 4 LEDS FÍSICOS!"
             cor_status = COLOR_YELLOW
         elif self.estado == "JOGADOR":
-            txt_status = "🎮 SUA VEZ: REPITA A SEQUÊNCIA (BT1..BT4 OU TOQUE)"
+            if self.modo_touch:
+                txt_status = "🎮 SUA VEZ: TOQUE NA COR OU USE [BT1/BT2]"
+            else:
+                txt_status = "🎮 SUA VEZ: [BT1] MOVER SELETOR | [BT2] ESCOLHER"
             cor_status = COLOR_CYAN
         elif self.estado == "ACERTO":
             txt_status = "✓ ACERTOU! PREPARE-SE PARA A PRÓXIMA..."
@@ -207,24 +258,45 @@ class JogoMemoryMaster(Jogo):
             cor_status = (255, 215, 0)
 
         surf_status = fonte_med.render(txt_status, True, cor_status)
-        superficie.blit(surf_status, surf_status.get_rect(center=(512, 85)))
+        superficie.blit(surf_status, surf_status.get_rect(center=(430, 88)))
 
-        # 4 Quadrantes Coloridos (Interface de Controle Tátil)
+        # 4 Quadrantes Coloridos
         for i, rect in enumerate(self.quadrantes):
-            # A cor só brilha em tela se for durante a jogada ativa do jogador
-            ativo = (self.estado == "JOGADOR" and self.cor_ativa == i)
+            # Célula ativa piscando (por toque ou durante demonstração visual em modo sem leds)
+            ativo = (self.cor_ativa == i)
+            selecionado = (self.estado == "JOGADOR" and not self.modo_touch and self.seletor_cor == i)
+
             cor = self.CORES_BRILHO[i] if ativo else self.CORES_BASE[i]
-
             pygame.draw.rect(superficie, cor, rect, border_radius=14)
-            borda = (255, 255, 255) if ativo else (30, 30, 40)
-            pygame.draw.rect(superficie, borda, rect, width=3 if ativo else 1, border_radius=14)
 
-            surf_rotulo = fonte_med.render(self.NOMES_CORES[i], True, (255, 255, 255) if ativo else (20, 20, 20))
-            superficie.blit(surf_rotulo, surf_rotulo.get_rect(center=rect.center))
+            # Moldura do seletor físico (glowing ouro) ou borda normal
+            if selecionado:
+                pygame.draw.rect(superficie, (255, 230, 40), rect, width=5, border_radius=14)
+            elif ativo:
+                pygame.draw.rect(superficie, (255, 255, 255), rect, width=4, border_radius=14)
+            else:
+                pygame.draw.rect(superficie, (25, 25, 35), rect, width=1, border_radius=14)
 
-        # Placar Inferior
-        surf_placar = fonte_med.render(f"RODADA ATUAL: {self.rodada}   |   RECORDE: {self.recorde}", True, COLOR_TEXT)
-        superficie.blit(surf_placar, surf_placar.get_rect(center=(512, 520)))
+            # Texto do quadrante
+            nome_cor = self.NOMES_CORES[i]
+            surf_rotulo = fonte_med.render(nome_cor, True, (255, 255, 255) if (ativo or selecionado) else (20, 20, 20))
+            superficie.blit(surf_rotulo, surf_rotulo.get_rect(center=(rect.centerx, rect.centery - 12)))
+
+            # Indicador de seletor ativo na cor
+            if selecionado:
+                surf_btn = fonte_peq.render("[BT2] ESCOLHER", True, (255, 240, 60))
+                superficie.blit(surf_btn, surf_btn.get_rect(center=(rect.centerx, rect.centery + 16)))
+
+        # Rodapé e Dica
+        surf_placar = fonte_med.render(f"RODADA: {self.rodada}   |   RECORDE: {self.recorde}", True, COLOR_TEXT)
+        superficie.blit(surf_placar, surf_placar.get_rect(center=(512, 515)))
+
+        if not self.modo_touch:
+            msg_dica = "[BT1] Mover Seletor     |     [BT2] Confirmar Cor     |     Segure [BT2] p/ Menu"
+        else:
+            msg_dica = "Toque diretamente na cor desejada ou use [BT1] Mover e [BT2] Escolher"
+        surf_dica = fonte_peq.render(msg_dica, True, COLOR_TEXT_DIM)
+        superficie.blit(surf_dica, surf_dica.get_rect(center=(512, 545)))
 
     def encerrar(self) -> None:
         self.hw.apagar_leds()
