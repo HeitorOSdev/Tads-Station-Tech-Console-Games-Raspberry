@@ -32,11 +32,11 @@ class JogoSteadyHands(Jogo):
         self.contato_anterior = False
         self.resultado_msg = ""
         self.timer_reinicio = 0.0
+        self.modo_touch = True
 
-        # Botões de toque para apoio
-        self.btn_iniciar = TouchButton(120, 420, 240, 56, "INICIAR (BT3)", COLOR_GREEN)
-        self.btn_concluir = TouchButton(664, 420, 240, 56, "CONCLUIR (BT4)", COLOR_CYAN)
-        self.btn_simular_toque = TouchButton(400, 420, 224, 56, "TESTAR TOQUE", COLOR_RED)
+        # Botões de toque para apoio (sem botões mock de simulação)
+        self.btn_iniciar = TouchButton(200, 420, 280, 58, "INICIAR (BT3)", COLOR_GREEN)
+        self.btn_concluir = TouchButton(544, 420, 280, 58, "CONCLUIR (BT4)", COLOR_CYAN)
 
     def get_id(self) -> str:
         return "steady_hands"
@@ -63,25 +63,32 @@ class JogoSteadyHands(Jogo):
         self.hw.set_led(2, self.vidas >= 3)
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
+        if "MODO_TOUCH" in estado_botoes:
+            self.modo_touch = estado_botoes["MODO_TOUCH"]
+
         for evento in eventos_pygame:
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
 
+            if evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+                self.modo_touch = True
+
             if self.estado == "ESPERA" and self.btn_iniciar.processar_evento(evento):
                 self._iniciar_partida()
 
-            elif self.estado == "PERCURSO":
-                if self.btn_concluir.processar_evento(evento):
-                    self._concluir_partida()
-                elif self.btn_simular_toque.processar_evento(evento):
-                    self._registrar_erro_contato()
+            elif self.estado == "PERCURSO" and self.btn_concluir.processar_evento(evento):
+                self._concluir_partida()
 
-        # Botões físicos da GPIO
-        if self.estado == "ESPERA" and estado_botoes.get("BT3"):
-            self._iniciar_partida()
+        # Botões físicos da GPIO (BT3 inicia, BT4 conclui)
+        if estado_botoes.get("BT3"):
+            self.modo_touch = False
+            if self.estado == "ESPERA":
+                self._iniciar_partida()
 
-        elif self.estado == "PERCURSO" and estado_botoes.get("BT4"):
-            self._concluir_partida()
+        elif estado_botoes.get("BT4"):
+            self.modo_touch = False
+            if self.estado == "PERCURSO":
+                self._concluir_partida()
 
     def _iniciar_partida(self):
         self.vidas = 3
@@ -179,10 +186,16 @@ class JogoSteadyHands(Jogo):
         surf_rec = fonte_peq.render(rec_txt, True, COLOR_TEXT_DIM)
         superficie.blit(surf_rec, surf_rec.get_rect(center=(512, 355)))
 
-        # Botões de Toque
-        self.btn_iniciar.renderizar(superficie, fonte_med)
-        self.btn_simular_toque.renderizar(superficie, fonte_peq)
-        self.btn_concluir.renderizar(superficie, fonte_med)
+        # Controles (Oculta botões touch se estiver em modo físico)
+        if self.modo_touch:
+            self.btn_iniciar.renderizar(superficie, fonte_med)
+            self.btn_concluir.renderizar(superficie, fonte_med)
+        else:
+            rect_hud = pygame.Rect(180, 430, 664, 44)
+            pygame.draw.rect(superficie, (18, 22, 36), rect_hud, border_radius=10)
+            pygame.draw.rect(superficie, COLOR_BORDER, rect_hud, width=1, border_radius=10)
+            surf_hud = fonte_peq.render("[BT3] INICIAR     |     [ARAME / ARGOLA] PERCURSO     |     [BT4] CONCLUIR", True, COLOR_TEXT_DIM)
+            superficie.blit(surf_hud, surf_hud.get_rect(center=rect_hud.center))
 
     def encerrar(self) -> None:
         self.hw.apagar_leds()

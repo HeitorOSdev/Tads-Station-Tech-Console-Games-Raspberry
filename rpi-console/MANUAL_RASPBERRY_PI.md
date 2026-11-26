@@ -45,20 +45,20 @@ O console integra **sete jogos completos**, operando a 60 FPS com gráficos acel
 > **SEGURANÇA ELÉTRICA (3.3V):**
 > Todos os botões utilizam `INPUT_PULLUP` interno da Raspberry Pi e fecham contato apenas no **GND**. Nunca ligue nenhum pino de GPIO na linha de 5V.
 
-| Pino Físico | Identificador BCM | Conexão Externa | Função Compartilhada (7 Jogos) |
+| Pino Físico | Identificador BCM | Conexão Externa | Função Compartilhada Unificada (7 Jogos) |
 | :---: | :---: | :--- | :--- |
 | **Pino 02** | **5V Power** | Alimentação da Tela Touch (Micro-USB) | Fornece 5V estáveis para o backlight da tela |
 | **Pino 06 ou 09** | **GND** | Barramento Negativo (GND Comum) | Referência de 0V compartilhada na protoboard |
-| **Pino 11** | **GPIO 17** | **Botão 1 (BT1)** | P1 QuickDraw, Genius 0, Minado 1, Frenzy, Perfect Time, **P1 PingPong (Cima)** |
-| **Pino 13** | **GPIO 27** | **Botão 2 (BT2)** | P2 QuickDraw, Genius 1, Minado 2, Menu Cima, **P1 PingPong (Baixo)** |
-| **Pino 15** | **GPIO 22** | **Botão 3 (BT3)** | Genius 2, Minado 3, Start Steady, Menu Baixo, **P2 PingPong (Cima)** |
-| **Pino 16** | **GPIO 23** | **Botão 4 (BT4)** | Genius 3, Minado 4, Fim Steady, **P2 PingPong (Baixo)** |
-| **Pino 18** | **GPIO 24** | **Botão 5 (BT5)** | Minado 5, Menu Confirmar/Entrar, **Botão de Pânico (Segurar 1.5s)** |
-| **Pino 29** | **GPIO 5** | **LED 1 (Vermelho)** | Genius L1, P1 QuickDraw, Vida 1 Steady, Frenzy Unidades, Gol P1 PingPong |
-| **Pino 31** | **GPIO 6** | **LED 2 (Verde)** | Genius L2, P2 QuickDraw, Vida 2 Steady, Frenzy Dezenas, Gol P2 PingPong |
-| **Pino 33** | **GPIO 13** | **LED 3 (Azul)** | Genius L3, Partida QuickDraw, Vida 3 Steady, Minado 3 |
-| **Pino 35** | **GPIO 19** | **LED 4 (Amarelo)** | Genius L4, Partida Steady Hands, Minado 4 |
-| **Pino 37** | **GPIO 26** | **LED 5 (Laranja)** | Erro de Contato Steady Hands, Minado 5 |
+| **Pino 11** | **GPIO 17** | **Botão 1 (BT1 - Esquerda Sup.)** | P1 QuickDraw, P1 PingPong Cima, Genius 0 (Vermelho), Frenzy, Perfect Time, Minado 1 |
+| **Pino 13** | **GPIO 27** | **Botão 2 (BT2 - Esquerda Inf.)** | P1 PingPong Baixo, Genius 1 (Verde), Menu Anterior, Minado 2 |
+| **Pino 15** | **GPIO 22** | **Botão 3 (BT3 - Direita Sup.)** | P2 PingPong Cima, Genius 2 (Azul), Início Steady Hands, Menu Próximo, Minado 3 |
+| **Pino 16** | **GPIO 23** | **Botão 4 (BT4 - Direita Inf.)** | P2 QuickDraw, P2 PingPong Baixo, Genius 3 (Amarelo), Fim Steady Hands, Minado 4 |
+| **Pino 18** | **GPIO 24** | **Botão 5 (BT5 - Centro Arcade)** | Menu Confirmar/Jogar, Minado 5, **Botão de Pânico (Segurar 1.5s sai para o menu)** |
+| **Pino 29** | **GPIO 5** | **LED 1 (Vermelho - 270Ω)** | Genius L1 (Dó), P1 QuickDraw, Vida 1 Steady, Gol P1 PingPong |
+| **Pino 31** | **GPIO 6** | **LED 2 (Verde - 220Ω)** | Genius L2 (Mi), P2 QuickDraw, Vida 2 Steady, Gol P2 PingPong |
+| **Pino 33** | **GPIO 13** | **LED 3 (Azul - 100Ω)** | Genius L3 (Sol), Partida QuickDraw, Vida 3 Steady, Minado 3 |
+| **Pino 35** | **GPIO 19** | **LED 4 (Amarelo - 270Ω)** | Genius L4 (Dó Agudo), Partida Steady Hands, Minado 4 |
+| **Pino 37** | **GPIO 26** | **LED 5 (Laranja - 270Ω)** | Alerta de Contato no Arame Steady Hands, Minado 5 |
 | **Pino 36** | **GPIO 16** | **Pista de Arame (Mão Firme)** | Entrada de toque com **resistor de 1 kΩ em série** *(Argola no GND)* |
 
 ---
@@ -169,14 +169,16 @@ Para que o console ligue direto no menu do console sem exibir a área de trabalh
 ## 8. Guia Rápido de Operação dos 7 Jogos
 
 * **Navegação no Menu:** Botão **BT2** (Anterior), **BT3** (Próximo) e **BT5** (Confirmar/Entrar). Também pode usar o toque direto na tela.
+* **Ocultação Inteligente de Toque:** Ao acionar qualquer botão físico, os botões virtuais da tela somem automaticamente para uma experiência arcade autêntica (com exceção do Jogo da Memória, botão `VOLTAR` e botão `DESLIGAR`).
+* **Desligamento Seguro por Toque:** Botão vermelho **DESLIGAR** no topo direito da tela touch do menu. Ao tocar nele, uma janela de confirmação surge; confirmando, o sistema desliga o hardware e o sistema operacional com segurança sem risco de corromper o MicroSD.
 * **Botão Universal de Pânico:** Segurar o **Botão 5 por 1,5 segundos** em qualquer jogo aborta a partida e retorna ao menu.
 * **Controles dos Jogos:**
-  1. **Memory Master:** Botões BT1..BT4 ou toque nos 4 quadrantes coloridos.
-  2. **Quick Draw:** Duelo 2P. P1 usa BT1 e P2 usa BT2.
-  3. **Steady Hands:** BT3 (Início), BT4 (Fim) e pista de arame condutor.
+  1. **Memory Master:** A sequência pisca exclusivamente nos 4 LEDs físicos (Vermelho, Verde, Azul, Amarelo). A tela funciona como painel de status e interface touch (BT1..BT4 ou quadrantes coloridos).
+  2. **Quick Draw:** Duelo 2P. P1 usa BT1 (esquerda) e P2 usa BT4 (direita - ergonômico, cada jogador em uma ponta).
+  3. **Steady Hands:** BT3 (Início), BT4 (Fim) e pista de arame condutor (GPIO 16).
   4. **Campo Minado:** Botões BT1..BT5 ou toque direto nas 5 cápsulas.
-  5. **Perfect Time:** BT1 inicia e para o cronômetro cego de 5 segundos.
-  6. **Button Frenzy:** BT1 ou toque o mais rápido possível por 10 segundos.
+  5. **Perfect Time:** BT1 inicia e para o cronômetro com latência zero (disparo instantâneo no toque ou clique).
+  6. **Button Frenzy:** BT1 ou tamborilar de dedos na tela por 10 segundos com registro ágil de CPS.
   7. **Ping Pong Arcade:** Duelo 2P de Ping Pong até 5 pontos:
      * **Jogador 1 (Esquerda):** BT1 (Sobe) e BT2 (Desce), ou setas azuis na tela touch.
      * **Jogador 2 (Direita):** BT3 (Sobe) e BT4 (Desce), ou setas vermelhas na tela touch.

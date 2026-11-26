@@ -33,6 +33,8 @@ class JogoQuickDraw(Jogo):
         self.estado = "ARMANDO"  # ARMANDO, CONTAGEM, FOGO, RESULTADO
         self.hora_largada = 0.0
         self.timer_resultado = 0.0
+        self.ultimo_toque = 0.0
+        self.modo_touch = True
 
         # Metades da tela para toque
         self.rect_p1 = pygame.Rect(40, 90, 450, 420)
@@ -56,25 +58,35 @@ class JogoQuickDraw(Jogo):
         self.vencedor = None
         self.motivo_fim = ""
         self.estado = "ARMANDO"
+        self.ultimo_toque = 0.0
         self.hw.apagar_leds()
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
+        if "MODO_TOUCH" in estado_botoes:
+            self.modo_touch = estado_botoes["MODO_TOUCH"]
+
+        agora = time.time()
         for evento in eventos_pygame:
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
 
-            # Toques na tela
+            # Toques na tela (com proteção contra duplo disparo)
             if evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
-                pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
-                if self.rect_p1.collidepoint(pos):
-                    self._acao_jogador(1)
-                elif self.rect_p2.collidepoint(pos):
-                    self._acao_jogador(2)
+                self.modo_touch = True
+                if agora - self.ultimo_toque >= 0.12:
+                    self.ultimo_toque = agora
+                    pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
+                    if self.rect_p1.collidepoint(pos):
+                        self._acao_jogador(1)
+                    elif self.rect_p2.collidepoint(pos):
+                        self._acao_jogador(2)
 
-        # Botões físicos
+        # Botões físicos: P1 usa BT1 (Esquerda); P2 usa BT4 (Direita - controle unificado ergonômico)
         if estado_botoes.get("BT1"):
+            self.modo_touch = False
             self._acao_jogador(1)
-        if estado_botoes.get("BT2"):
+        if estado_botoes.get("BT4") or estado_botoes.get("BT2"):
+            self.modo_touch = False
             self._acao_jogador(2)
 
     def _acao_jogador(self, player: int):
@@ -164,7 +176,7 @@ class JogoQuickDraw(Jogo):
         surf_p1 = fonte_med.render("JOGADOR 1 (BT1)", True, COLOR_RED)
         superficie.blit(surf_p1, surf_p1.get_rect(center=(self.rect_p1.centerx, 130)))
 
-        txt_p1 = "ARMADO!" if self.p1_pronto else "TOQUE OU APERTE BT1"
+        txt_p1 = "ARMADO!" if self.p1_pronto else ("TOQUE OU APERTE BT1" if self.modo_touch else "PRESSIONE BT1")
         if self.p1_tempo_ms is not None: txt_p1 = f"{self.p1_tempo_ms} ms"
         surf_status_p1 = fonte_med.render(txt_p1, True, COLOR_TEXT)
         superficie.blit(surf_status_p1, surf_status_p1.get_rect(center=(self.rect_p1.centerx, 300)))
@@ -175,10 +187,10 @@ class JogoQuickDraw(Jogo):
         pygame.draw.rect(superficie, cor_p2, self.rect_p2, border_radius=16)
         pygame.draw.rect(superficie, COLOR_CYAN, self.rect_p2, width=2, border_radius=16)
 
-        surf_p2 = fonte_med.render("JOGADOR 2 (BT2)", True, COLOR_CYAN)
+        surf_p2 = fonte_med.render("JOGADOR 2 (BT4)", True, COLOR_CYAN)
         superficie.blit(surf_p2, surf_p2.get_rect(center=(self.rect_p2.centerx, 130)))
 
-        txt_p2 = "ARMADO!" if self.p2_pronto else "TOQUE OU APERTE BT2"
+        txt_p2 = "ARMADO!" if self.p2_pronto else ("TOQUE OU APERTE BT4" if self.modo_touch else "PRESSIONE BT4")
         if self.p2_tempo_ms is not None: txt_p2 = f"{self.p2_tempo_ms} ms"
         surf_status_p2 = fonte_med.render(txt_p2, True, COLOR_TEXT)
         superficie.blit(surf_status_p2, surf_status_p2.get_rect(center=(self.rect_p2.centerx, 300)))

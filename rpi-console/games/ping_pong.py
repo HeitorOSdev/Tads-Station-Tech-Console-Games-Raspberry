@@ -58,6 +58,7 @@ class JogoPingPong(Jogo):
         self.estado = "PRONTO"  # PRONTO, JOGANDO, GOL, VITORIA
         self.vencedor = None
         self.timer_estado = 0.0
+        self.modo_touch = True
 
         # Botões de Toque na Tela para apoio aos jogadores
         self.btn_p1_up = TouchButton(10, 100, 70, 180, "▲", COLOR_CYAN)
@@ -97,9 +98,15 @@ class JogoPingPong(Jogo):
         self.bola_vy = angulo_y * self.velocidade_atual
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
+        if "MODO_TOUCH" in estado_botoes:
+            self.modo_touch = estado_botoes["MODO_TOUCH"]
+
         for evento in eventos_pygame:
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
+
+            if evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+                self.modo_touch = True
 
             # Toques rápidos nas setas da tela
             self.btn_p1_up.processar_evento(evento)
@@ -250,11 +257,12 @@ class JogoPingPong(Jogo):
         pygame.draw.circle(superficie, COLOR_YELLOW, (int(self.bola_x), int(self.bola_y)), self.raio_bola)
         pygame.draw.circle(superficie, (255, 255, 255), (int(self.bola_x), int(self.bola_y)), self.raio_bola - 2)
 
-        # Setas Táteis Laterais para suporte a Touchscreen
-        self.btn_p1_up.renderizar(superficie, fonte_tit)
-        self.btn_p1_down.renderizar(superficie, fonte_tit)
-        self.btn_p2_up.renderizar(superficie, fonte_tit)
-        self.btn_p2_down.renderizar(superficie, fonte_tit)
+        # Setas Táteis Laterais para suporte a Touchscreen (Ocultas no modo físico)
+        if self.modo_touch:
+            self.btn_p1_up.renderizar(superficie, fonte_tit)
+            self.btn_p1_down.renderizar(superficie, fonte_tit)
+            self.btn_p2_up.renderizar(superficie, fonte_tit)
+            self.btn_p2_down.renderizar(superficie, fonte_tit)
 
         # Rótulos dos Jogadores
         surf_lbl_p1 = fonte_peq.render("P1: BT1(▲) BT2(▼)", True, COLOR_CYAN)

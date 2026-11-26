@@ -71,13 +71,19 @@ class TouchButton:
 class HeaderBar:
     """Barra superior com título, botão universal de saída e status."""
 
-    def __init__(self, titulo: str, botao_voltar: bool = True):
+    def __init__(self, titulo: str, botao_voltar: bool = True, botao_desligar: bool = False):
         self.titulo = titulo
         self.btn_voltar = TouchButton(15, 10, 160, 42, "<- VOLTAR", COLOR_RED) if botao_voltar else None
+        self.btn_desligar = TouchButton(865, 10, 145, 42, "DESLIGAR", COLOR_RED) if botao_desligar else None
 
     def processar_evento(self, evento: pygame.event.Event) -> bool:
         if self.btn_voltar:
             return self.btn_voltar.processar_evento(evento)
+        return False
+
+    def processar_desligar(self, evento: pygame.event.Event) -> bool:
+        if self.btn_desligar:
+            return self.btn_desligar.processar_evento(evento)
         return False
 
     def renderizar(self, superficie: pygame.Surface, fonte_tit: pygame.font.Font, fonte_sub: pygame.font.Font):
@@ -88,6 +94,9 @@ class HeaderBar:
         if self.btn_voltar:
             self.btn_voltar.renderizar(superficie, fonte_sub)
 
+        if self.btn_desligar:
+            self.btn_desligar.renderizar(superficie, fonte_sub)
+
         # Título
         surf_tit = fonte_tit.render(self.titulo, True, COLOR_TEXT)
         rect_tit = surf_tit.get_rect(center=(512, 31))
@@ -96,7 +105,8 @@ class HeaderBar:
         # Relógio
         hora_str = time.strftime("%H:%M:%S")
         surf_hora = fonte_sub.render(hora_str, True, COLOR_TEXT_DIM)
-        superficie.blit(surf_hora, (930, 22))
+        pos_x = 760 if self.btn_desligar else 930
+        superficie.blit(surf_hora, (pos_x, 22))
 
 
 class HardwareLedBar:

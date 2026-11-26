@@ -45,9 +45,10 @@ class JogoButtonFrenzy(Jogo):
         self.timer_contagem = 0.0
         self.segundos_contagem = 3
         self.timer_resultado = 0.0
+        self.modo_touch = True
 
         # Botão gigante de clique na tela
-        self.btn_frenzy = TouchButton(262, 140, 500, 250, "APERTE BT1 OU TOQUE AQUI\nPARA INICIAR", COLOR_CYAN)
+        self.btn_frenzy = TouchButton(262, 140, 500, 250, "INICIAR", COLOR_CYAN)
 
     def get_id(self) -> str:
         return "button_frenzy"
@@ -65,21 +66,27 @@ class JogoButtonFrenzy(Jogo):
         self.cps = 0.0
         self.tempo_restante = self.DURACAO_PARTIDA
         self.classificacao = ""
-        self.btn_frenzy.texto = "APERTE BT1 OU TOQUE AQUI\nPARA INICIAR"
         self.btn_frenzy.cor_destaque = COLOR_CYAN
         self.hw.apagar_leds()
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
+        if "MODO_TOUCH" in estado_botoes:
+            self.modo_touch = estado_botoes["MODO_TOUCH"]
+
         for evento in eventos_pygame:
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
 
-            # Toques na tela
-            if self.btn_frenzy.processar_evento(evento):
-                self._tratar_clique()
+            # Toques rápidos imediatos (permite tamborilar com múltiplos dedos na tela)
+            if evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+                self.modo_touch = True
+                pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
+                if self.btn_frenzy.rect.collidepoint(pos):
+                    self._tratar_clique()
 
         # Botão físico BT1 (Pino 11)
         if estado_botoes.get("BT1"):
+            self.modo_touch = False
             self._tratar_clique()
 
     def _tratar_clique(self):
@@ -160,6 +167,10 @@ class JogoButtonFrenzy(Jogo):
         fonte_gra = pygame.font.SysFont("arial", 52, bold=True)
 
         self.header.renderizar(superficie, fonte_tit, fonte_peq)
+
+        # Ajuste de texto baseado no modo de entrada (Touch vs Físico)
+        if self.estado == "AGUARDANDO":
+            self.btn_frenzy.texto = "TOQUE PARA INICIAR\n(10 SEGUNDOS)" if self.modo_touch else "PRESSIONE BT1 PARA INICIAR\n(10 SEGUNDOS)"
 
         # Botão / Painel de Toque Central
         if self.estado == "CONTAGEM":

@@ -18,7 +18,10 @@ class InputManager:
         self.hw = hardware
         self.estado_anterior = {"BT1": False, "BT2": False, "BT3": False, "BT4": False, "BT5": False}
         self.estado_atual = {"BT1": False, "BT2": False, "BT3": False, "BT4": False, "BT5": False}
-        self.borda_descida = {"BT1": False, "BT2": False, "BT3": False, "BT4": False, "BT5": False}
+        self.borda_descida = {"BT1": False, "BT2": False, "BT3": False, "BT4": False, "BT5": False, "MODO_TOUCH": True}
+
+        # Modo de entrada atual: "TOUCH" ou "FISICO" (Alterna dinamicamente)
+        self.modo_entrada = "TOUCH"
 
         # Timer para o botão universal de saída (Segurar BT5 por 1.5 segundos)
         self.tempo_inicio_bt5 = 0.0
@@ -28,34 +31,53 @@ class InputManager:
         """Atualiza o estado consolidado dos controles físicos e emulados."""
         self.hw.atualizar()
 
+        # Detecção de interação touch nos eventos
+        for evento in eventos_pygame:
+            if evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+                self.modo_entrada = "TOUCH"
+            elif evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    self.solicitou_retorno_menu = True
+                else:
+                    self.modo_entrada = "FISICO"
+
         # Copia estados atuais dos botões físicos
-        for btn in self.estado_atual.keys():
-            self.estado_atual[btn] = self.hw.esta_pressionado(btn)
+        houve_acao_fisica = False
+        for btn in ("BT1", "BT2", "BT3", "BT4", "BT5"):
+            press = self.hw.esta_pressionado(btn)
+            self.estado_atual[btn] = press
+            if press:
+                houve_acao_fisica = True
 
         # Mapeia teclas de teclado para auxiliar testes fora da Raspberry Pi
         teclas = pygame.key.get_pressed()
         if teclas[pygame.K_1] or teclas[pygame.K_LEFT]:
             self.estado_atual["BT1"] = True
+            houve_acao_fisica = True
         if teclas[pygame.K_2] or teclas[pygame.K_UP]:
             self.estado_atual["BT2"] = True
+            houve_acao_fisica = True
         if teclas[pygame.K_3] or teclas[pygame.K_DOWN]:
             self.estado_atual["BT3"] = True
+            houve_acao_fisica = True
         if teclas[pygame.K_4] or teclas[pygame.K_RIGHT]:
             self.estado_atual["BT4"] = True
+            houve_acao_fisica = True
         if teclas[pygame.K_5] or teclas[pygame.K_RETURN] or teclas[pygame.K_SPACE]:
             self.estado_atual["BT5"] = True
+            houve_acao_fisica = True
 
-        # Processa cliques e teclas avulsas nos eventos Pygame
-        for evento in eventos_pygame:
-            if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_ESCAPE:
-                    self.solicitou_retorno_menu = True
+        if houve_acao_fisica:
+            self.modo_entrada = "FISICO"
 
         # Calcula transições de borda (apenas no instante do clique)
-        for btn, atual in self.estado_atual.items():
+        for btn in ("BT1", "BT2", "BT3", "BT4", "BT5"):
             anterior = self.estado_anterior[btn]
+            atual = self.estado_atual[btn]
             self.borda_descida[btn] = (atual and not anterior)
             self.estado_anterior[btn] = atual
+
+        self.borda_descida["MODO_TOUCH"] = (self.modo_entrada == "TOUCH")
 
         # Verificação do botão de retorno ao menu (Segurar BT5 por 1.5s)
         agora = time.time()
@@ -66,6 +88,10 @@ class InputManager:
                 self.solicitou_retorno_menu = True
         else:
             self.tempo_inicio_bt5 = 0.0
+
+    def exibir_botoes_touch(self) -> bool:
+        """Retorna True se os botões auxiliares touch devem ser desenhados na tela."""
+        return self.modo_entrada == "TOUCH"
 
     def foi_pressionado(self, nome_botao: str) -> bool:
         """Retorna True apenas no frame em que o botão foi acionado."""

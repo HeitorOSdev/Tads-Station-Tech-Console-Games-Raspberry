@@ -9,6 +9,7 @@ Executa na Raspberry Pi 3 B+ com Display Touch 7" HDMI IPS.
 
 import sys
 import time
+import os
 import pygame
 
 from core.hardware import HardwareManager
@@ -99,15 +100,30 @@ def main():
         # MÁQUINA DE ESTADOS DO CONSOLE
         # -------------------------------------------------------------
         if estado_console == "MENU":
-            novo_jogo = launcher.processar_eventos(eventos, input_mgr)
-            if novo_jogo:
+            resultado = launcher.processar_eventos(eventos, input_mgr)
+            if resultado == "DESLIGAR":
+                print("[CONSOLE] Desligamento seguro solicitado via tela Touch...")
+                tela.fill((12, 14, 24))
+                surf_aviso1 = fonte_tit.render("DESLIGANDO O CONSOLE...", True, (255, 60, 90))
+                surf_aviso2 = fonte_med.render("Aguarde o LED verde apagar antes de retirar da tomada.", True, (240, 245, 255))
+                tela.blit(surf_aviso1, surf_aviso1.get_rect(center=(512, 270)))
+                tela.blit(surf_aviso2, surf_aviso2.get_rect(center=(512, 330)))
+                pygame.display.flip()
+                time.sleep(1.2)
+
+                hw.encerrar()
+                pygame.quit()
+                os.system("sudo poweroff")
+                sys.exit(0)
+            elif resultado:
+                novo_jogo = resultado
                 print(f"[CONSOLE] Iniciando jogo: {novo_jogo.get_nome()}")
                 audio.tocar("menu_select")
                 jogo_ativo = novo_jogo
                 jogo_ativo.iniciar()
                 estado_console = "JOGANDO"
             else:
-                launcher.renderizar(tela, fonte_tit, fonte_med, fonte_peq)
+                launcher.renderizar(tela, fonte_tit, fonte_med, fonte_peq, input_mgr.exibir_botoes_touch())
 
         elif estado_console == "JOGANDO" and jogo_ativo:
             # Processa eventos no jogo ativo

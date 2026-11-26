@@ -43,9 +43,10 @@ class JogoPerfectTime(Jogo):
         self.cor_classificacao = COLOR_TEXT
         self.recorde_erro_ms = None
         self.timer_resultado = 0.0
+        self.modo_touch = True
 
         # Botão touch central grande para acionamento
-        self.btn_gatilho = TouchButton(312, 160, 400, 240, "TOQUE OU APERTE BT1\nPARA INICIAR", COLOR_CYAN)
+        self.btn_gatilho = TouchButton(312, 160, 400, 240, "INICIAR", COLOR_CYAN)
 
     def get_id(self) -> str:
         return "perfect_time"
@@ -64,21 +65,27 @@ class JogoPerfectTime(Jogo):
         self.pontos = 0
         self.classificacao = ""
         self.cor_classificacao = COLOR_TEXT
-        self.btn_gatilho.texto = "TOQUE OU APERTE BT1\nPARA INICIAR"
         self.btn_gatilho.cor_destaque = COLOR_CYAN
         self.hw.apagar_leds()
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
+        if "MODO_TOUCH" in estado_botoes:
+            self.modo_touch = estado_botoes["MODO_TOUCH"]
+
         for evento in eventos_pygame:
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
 
-            # Toque na tela
-            if self.btn_gatilho.processar_evento(evento):
-                self._acionar()
+            # Disparo instantâneo no toque (DOWN) - latência zero idêntica ao botão físico BT1
+            if evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+                self.modo_touch = True
+                pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
+                if self.btn_gatilho.rect.collidepoint(pos):
+                    self._acionar()
 
         # Botão físico BT1 (Pino 11)
         if estado_botoes.get("BT1"):
+            self.modo_touch = False
             self._acionar()
 
     def _acionar(self):
@@ -91,7 +98,6 @@ class JogoPerfectTime(Jogo):
             self.hw.set_led(1, True)  # LED Verde ligado durante contagem
             self.hw.set_led(0, False)
             self.audio.tocar("acerto")
-            self.btn_gatilho.texto = "CONTAGEM ATIVA!\nTOQUE PARA PARAR NOS 5s"
             self.btn_gatilho.cor_destaque = COLOR_YELLOW
 
         elif self.estado == "ESTIMANDO":
@@ -159,6 +165,12 @@ class JogoPerfectTime(Jogo):
         fonte_gra = pygame.font.SysFont("arial", 42, bold=True)
 
         self.header.renderizar(superficie, fonte_tit, fonte_peq)
+
+        # Atualiza rótulo dinâmico baseado no modo de entrada (Físico vs Touch)
+        if self.estado == "AGUARDANDO":
+            self.btn_gatilho.texto = "TOQUE NA TELA\nPARA INICIAR" if self.modo_touch else "PRESSIONE BT1\nPARA INICIAR"
+        elif self.estado == "ESTIMANDO":
+            self.btn_gatilho.texto = "CONTAGEM ATIVA!\nTOQUE PARA PARAR" if self.modo_touch else "CONTAGEM ATIVA!\nAPERTE BT1 PARA PARAR"
 
         # Botão / Painel de Acionamento Central
         self.btn_gatilho.renderizar(superficie, fonte_med)

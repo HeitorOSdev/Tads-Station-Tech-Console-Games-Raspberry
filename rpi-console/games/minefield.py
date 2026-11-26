@@ -27,6 +27,8 @@ class JogoCampoMinado(Jogo):
         self.acertos = 0
         self.estado = "JOGANDO"  # JOGANDO, VITORIA, DERROTA
         self.timer_reinicio = 0.0
+        self.modo_touch = True
+        self.ultimo_toque = 0.0
 
         # 5 cartas na tela (distribuídas horizontalmente)
         self.rects_cartas = [
@@ -48,6 +50,7 @@ class JogoCampoMinado(Jogo):
         self.descobertos = [False] * 5
         self.acertos = 0
         self.estado = "JOGANDO"
+        self.ultimo_toque = 0.0
         self.hw.apagar_leds()
 
         # Sorteia exatamente 2 minas
@@ -56,23 +59,31 @@ class JogoCampoMinado(Jogo):
             self.minas[p] = True
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
+        if "MODO_TOUCH" in estado_botoes:
+            self.modo_touch = estado_botoes["MODO_TOUCH"]
+
+        agora = time.time()
         for evento in eventos_pygame:
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
 
-            # Toque nas cartas
+            # Toque nas cartas (com debounce de 150ms)
             if self.estado == "JOGANDO" and evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
-                pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
-                for i, rect in enumerate(self.rects_cartas):
-                    if rect.collidepoint(pos):
-                        self._revelar_posicao(i)
-                        break
+                self.modo_touch = True
+                if agora - self.ultimo_toque >= 0.15:
+                    self.ultimo_toque = agora
+                    pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
+                    for i, rect in enumerate(self.rects_cartas):
+                        if rect.collidepoint(pos):
+                            self._revelar_posicao(i)
+                            break
 
         # Botões físicos
         if self.estado == "JOGANDO":
             for i in range(5):
                 nome_btn = f"BT{i+1}"
                 if estado_botoes.get(nome_btn):
+                    self.modo_touch = False
                     self._revelar_posicao(i)
                     break
 
@@ -156,8 +167,9 @@ class JogoCampoMinado(Jogo):
             surf_s = fonte_peq.render(txt_sub, True, COLOR_TEXT_DIM)
             superficie.blit(surf_s, surf_s.get_rect(center=(rect.centerx, rect.centery + 35)))
 
-        # Dica na base
-        surf_dica = fonte_peq.render("Toque em uma carta ou pressione o botão físico correspondente (BT1 a BT5)", True, COLOR_TEXT_DIM)
+        # Dica na base baseada no modo de entrada
+        msg_dica = "Toque em uma carta para revelar o caminho" if self.modo_touch else "Pressione BT1 a BT5 para abrir a cápsula correspondente"
+        surf_dica = fonte_peq.render(msg_dica, True, COLOR_TEXT_DIM)
         superficie.blit(surf_dica, surf_dica.get_rect(center=(512, 480)))
 
     def encerrar(self) -> None:

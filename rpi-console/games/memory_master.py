@@ -47,13 +47,14 @@ class JogoMemoryMaster(Jogo):
         self.timer_estado = 0.0
         self.cor_ativa = -1
         self.led_ativo = False
+        self.ultimo_toque = 0.0
 
         # Zonas de toque nos 4 quadrantes
         self.quadrantes = [
-            pygame.Rect(262, 110, 240, 180),  # Top-Left (Vermelho)
-            pygame.Rect(522, 110, 240, 180),  # Top-Right (Verde)
-            pygame.Rect(262, 310, 240, 180),  # Bottom-Left (Azul)
-            pygame.Rect(522, 310, 240, 180)   # Bottom-Right (Amarelo)
+            pygame.Rect(262, 110, 240, 180),  # Top-Left (Vermelho - BT1 / LED1)
+            pygame.Rect(522, 110, 240, 180),  # Top-Right (Verde - BT2 / LED2)
+            pygame.Rect(262, 310, 240, 180),  # Bottom-Left (Azul - BT3 / LED3)
+            pygame.Rect(522, 310, 240, 180)   # Bottom-Right (Amarelo - BT4 / LED4)
         ]
 
     def get_id(self) -> str:
@@ -63,7 +64,7 @@ class JogoMemoryMaster(Jogo):
         return "Memory Master"
 
     def get_descricao(self) -> str:
-        return "Repita a sequência progressiva de luzes e sons nos botões ou na tela."
+        return "Observe a sequência nos 4 LEDs físicos e repita pelos botões ou pelo touch."
 
     def iniciar(self) -> None:
         self.retorno_menu = False
@@ -75,22 +76,26 @@ class JogoMemoryMaster(Jogo):
         self.timer_estado = time.time() + 0.8
         self.cor_ativa = -1
         self.led_ativo = False
+        self.ultimo_toque = 0.0
         self.hw.apagar_leds()
 
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
+        agora = time.time()
         for evento in eventos_pygame:
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
 
-            # Clique ou toque nos quadrantes coloridos
+            # Clique ou toque nos quadrantes coloridos (com debounce de 200ms contra eventos duplicados)
             if self.estado == "JOGADOR" and evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
-                pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
-                for i, rect in enumerate(self.quadrantes):
-                    if rect.collidepoint(pos):
-                        self._registrar_jogada(i)
-                        break
+                if agora - self.ultimo_toque >= 0.20:
+                    pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
+                    for i, rect in enumerate(self.quadrantes):
+                        if rect.collidepoint(pos):
+                            self.ultimo_toque = agora
+                            self._registrar_jogada(i)
+                            break
 
-        # Processamento de botões físicos da GPIO
+        # Processamento de botões físicos da GPIO (BT1=0, BT2=1, BT3=2, BT4=3)
         if self.estado == "JOGADOR":
             if estado_botoes.get("BT1"): self._registrar_jogada(0)
             elif estado_botoes.get("BT2"): self._registrar_jogada(1)
@@ -133,7 +138,8 @@ class JogoMemoryMaster(Jogo):
             if not self.led_ativo:
                 if agora >= self.timer_estado:
                     cor = self.sequencia[self.passo_seq]
-                    self.cor_ativa = cor
+                    # Pisca EXCLUSIVAMENTE o LED físico correspondente (A tela permanece sem acender)
+                    self.cor_ativa = -1
                     self.hw.set_led(cor, True)
                     self.audio.tocar(f"genius_{cor}")
                     self.led_ativo = True
@@ -152,7 +158,7 @@ class JogoMemoryMaster(Jogo):
                         self.timer_estado = agora + 6.0  # 6 segundos para responder
 
         elif self.estado == "JOGADOR":
-            # Apaga o destaque visual do toque após pequeno delay
+            # Apaga o destaque visual do toque após pequeno delay de feedback
             if self.cor_ativa != -1 and agora >= self.timer_estado:
                 self.hw.apagar_leds()
                 self.cor_ativa = -1
@@ -183,19 +189,30 @@ class JogoMemoryMaster(Jogo):
 
         self.header.renderizar(superficie, fonte_tit, fonte_peq)
 
-        # Painel de Status Central
-        txt_status = "MEMORIZE A SEQUENCIA..." if self.estado == "MOSTRANDO" else \
-                     "SUA VEZ! REPITA A SEQUENCIA" if self.estado == "JOGADOR" else \
-                     "CORRETO!" if self.estado == "ACERTO" else \
-                     "FIM DE JOGO! TENTE NOVAMENTE" if self.estado == "DERROTA" else "PARABÉNS! VOCÊ VENCEU!"
+        # Painel de Status Dinâmico (A tela orienta e diz se acertou ou errou)
+        if self.estado == "MOSTRANDO":
+            txt_status = "👀 OBSERVE A SEQUÊNCIA NOS 4 LEDS FÍSICOS!"
+            cor_status = COLOR_YELLOW
+        elif self.estado == "JOGADOR":
+            txt_status = "🎮 SUA VEZ: REPITA A SEQUÊNCIA (BT1..BT4 OU TOQUE)"
+            cor_status = COLOR_CYAN
+        elif self.estado == "ACERTO":
+            txt_status = "✓ ACERTOU! PREPARE-SE PARA A PRÓXIMA..."
+            cor_status = (40, 240, 130)
+        elif self.estado == "DERROTA":
+            txt_status = "✗ SEQUÊNCIA INCORRETA! FIM DE JOGO"
+            cor_status = (255, 60, 90)
+        else:
+            txt_status = "★ PARABÉNS! VOCÊ VENCEU O DESAFIO GENIUS!"
+            cor_status = (255, 215, 0)
 
-        cor_status = COLOR_YELLOW if self.estado == "MOSTRANDO" else COLOR_CYAN if self.estado == "JOGADOR" else COLOR_TEXT
         surf_status = fonte_med.render(txt_status, True, cor_status)
         superficie.blit(surf_status, surf_status.get_rect(center=(512, 85)))
 
-        # 4 Quadrantes Coloridos
+        # 4 Quadrantes Coloridos (Interface de Controle Tátil)
         for i, rect in enumerate(self.quadrantes):
-            ativo = (self.cor_ativa == i)
+            # A cor só brilha em tela se for durante a jogada ativa do jogador
+            ativo = (self.estado == "JOGADOR" and self.cor_ativa == i)
             cor = self.CORES_BRILHO[i] if ativo else self.CORES_BASE[i]
 
             pygame.draw.rect(superficie, cor, rect, border_radius=14)
