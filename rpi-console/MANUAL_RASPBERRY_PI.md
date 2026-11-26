@@ -145,21 +145,29 @@ Com a Raspberry Pi **desligada**:
 
 ## 7. Configuração do Modo Console Kiosk (Auto-Start no Boot)
 
-Para que o console ligue direto no menu do console sem exibir a área de trabalho do Linux:
+Para que o console ligue direto no menu de jogos ao energizar a Raspberry Pi (sem precisar de teclado ou comandos):
 
-1. Copie o arquivo de serviço systemd:
+### Método Recomendado (Via ~/.bashrc + Autologin no Console):
+1. Habilite o login automático no console:
    ```bash
-   sudo cp tech-arcade.service /etc/systemd/system/
+   sudo raspi-config
    ```
-2. Habilite o serviço:
+   * Vá em **System Options** $\rightarrow$ **Boot / Auto Login** $\rightarrow$ selecione **Console Autologin** $\rightarrow$ **Finish** (Reinicie se solicitado).
+2. Adicione a inicialização automática no final do seu `~/.bashrc`:
    ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable tech-arcade.service
+   echo 'if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+       cd ~/Tads-Station-Tech-Console-Games-Raspberry/rpi-console
+       xinit /usr/bin/python3 ./main.py -- :0 vt1 -nocursor
+   fi' >> ~/.bashrc
    ```
-3. Inicie o console de imediato:
-   ```bash
-   sudo systemctl start tech-arcade.service
-   ```
+
+### Método Alternativo (Via Serviço Systemd):
+```bash
+sudo cp tech-arcade.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable tech-arcade.service
+sudo systemctl start tech-arcade.service
+```
 
 ---
 
