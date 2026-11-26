@@ -49,16 +49,16 @@ O console integra **sete jogos completos**, operando a 60 FPS com gráficos acel
 | :---: | :---: | :--- | :--- |
 | **Pino 02** | **5V Power** | Alimentação da Tela Touch (Micro-USB) | Fornece 5V estáveis para o backlight da tela |
 | **Pino 06 ou 09** | **GND** | Barramento Negativo (GND Comum) | Referência de 0V compartilhada na protoboard |
-| **Pino 11** | **GPIO 17** | **Botão 1 (BT1 - Esquerda Sup.)** | P1 QuickDraw, P1 PingPong Cima, Genius 0 (Vermelho), Frenzy, Perfect Time, Minado 1 |
-| **Pino 13** | **GPIO 27** | **Botão 2 (BT2 - Esquerda Inf.)** | P1 PingPong Baixo, Genius 1 (Verde), Menu Anterior, Minado 2 |
-| **Pino 15** | **GPIO 22** | **Botão 3 (BT3 - Direita Sup.)** | P2 PingPong Cima, Genius 2 (Azul), Início Steady Hands, Menu Próximo, Minado 3 |
-| **Pino 16** | **GPIO 23** | **Botão 4 (BT4 - Direita Inf.)** | P2 QuickDraw, P2 PingPong Baixo, Genius 3 (Amarelo), Fim Steady Hands, Minado 4 |
-| **Pino 18** | **GPIO 24** | **Botão 5 (BT5 - Centro Arcade)** | Menu Confirmar/Jogar, Minado 5, **Botão de Pânico (Segurar 1.5s sai para o menu)** |
-| **Pino 29** | **GPIO 5** | **LED 1 (Vermelho - 270Ω)** | Genius L1 (Dó), P1 QuickDraw, Vida 1 Steady, Gol P1 PingPong |
-| **Pino 31** | **GPIO 6** | **LED 2 (Verde - 220Ω)** | Genius L2 (Mi), P2 QuickDraw, Vida 2 Steady, Gol P2 PingPong |
-| **Pino 33** | **GPIO 13** | **LED 3 (Azul - 100Ω)** | Genius L3 (Sol), Partida QuickDraw, Vida 3 Steady, Minado 3 |
-| **Pino 35** | **GPIO 19** | **LED 4 (Amarelo - 270Ω)** | Genius L4 (Dó Agudo), Partida Steady Hands, Minado 4 |
+| **Pino 11** | **GPIO 17** *(GPIO 0 no diagrama)* | **LED 1 (Vermelho - 270Ω)** | Genius L1 (Dó), P1 QuickDraw, Vida 1 Steady, Gol P1 PingPong |
+| **Pino 13** | **GPIO 27** *(GPIO 2 no diagrama)* | **LED 2 (Verde - 220Ω)** | Genius L2 (Mi), P2 QuickDraw, Vida 2 Steady, Gol P2 PingPong |
+| **Pino 15** | **GPIO 22** *(GPIO 3 no diagrama)* | **LED 3 (Azul - 100Ω)** | Genius L3 (Sol), Partida QuickDraw, Vida 3 Steady, Minado 3 |
+| **Pino 16** | **GPIO 23** *(GPIO 4 no diagrama)* | **LED 4 (Amarelo - 270Ω)** | Genius L4 (Dó Agudo), Partida Steady Hands, Minado 4 |
 | **Pino 37** | **GPIO 26** | **LED 5 (Laranja - 270Ω)** | Alerta de Contato no Arame Steady Hands, Minado 5 |
+| **Pino 29** | **GPIO 5** | **Botão 1 (BT1 - Esquerda Sup.)** | P1 QuickDraw, P1 PingPong Cima, Genius 0 (Vermelho), Frenzy, Perfect Time, Minado 1 |
+| **Pino 31** | **GPIO 6** | **Botão 2 (BT2 - Esquerda Inf.)** | P1 PingPong Baixo, Genius 1 (Verde), Menu Anterior, Minado 2 |
+| **Pino 33** | **GPIO 13** | **Botão 3 (BT3 - Direita Sup.)** | P2 PingPong Cima, Genius 2 (Azul), Início Steady Hands, Menu Próximo, Minado 3 |
+| **Pino 35** | **GPIO 19** | **Botão 4 (BT4 - Direita Inf.)** | P2 QuickDraw, P2 PingPong Baixo, Genius 3 (Amarelo), Fim Steady Hands, Minado 4 |
+| **Pino 18** | **GPIO 24** | **Botão 5 (BT5 - Centro Arcade)** | Menu Confirmar/Jogar, Minado 5, **Botão de Pânico (Segurar 1.5s sai para o menu)** |
 | **Pino 36** | **GPIO 16** | **Pista de Arame (Mão Firme)** | Entrada de toque com **resistor de 1 kΩ em série** *(Argola no GND)* |
 
 ---
@@ -180,5 +180,6 @@ Para que o console ligue direto no menu do console sem exibir a área de trabalh
   5. **Perfect Time:** BT1 inicia e para o cronômetro com latência zero (disparo instantâneo no toque ou clique).
   6. **Button Frenzy:** BT1 ou tamborilar de dedos na tela por 10 segundos com registro ágil de CPS.
   7. **Ping Pong Arcade:** Duelo 2P de Ping Pong até 5 pontos:
-     * **Jogador 1 (Esquerda):** BT1 (Sobe) e BT2 (Desce), ou setas azuis na tela touch.
-     * **Jogador 2 (Direita):** BT3 (Sobe) e BT4 (Desce), ou setas vermelhas na tela touch.
+     * **Movimento Contínuo:** As raquetes se movimentam sozinhas e rebatem automaticamente nas bordas superior e inferior.
+     * **Controle por Inversão:** Um toque no botão físico (**BT1** ou **BT2**) inverte instantaneamente a direção da raquete do Jogador 1 (Esquerda). Um toque em **BT3** ou **BT4** inverte a do Jogador 2 (Direita).
+     * **Controles Touch Translúcidos:** Áreas touch semitransparentes no centro de cada campo permitem que os jogadores toquem na tela para inverter o sentido das raquetes sem obstruir a visão da bola.

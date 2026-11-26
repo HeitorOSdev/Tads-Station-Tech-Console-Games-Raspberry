@@ -21,7 +21,7 @@ from ui.components import HeaderBar, TouchButton, COLOR_BG, COLOR_PANEL, COLOR_B
 
 class JogoPingPong(Jogo):
     PONTOS_VITORIA = 5
-    VELOCIDADE_RAQUETE = 480.0  # pixels por segundo
+    VELOCIDADE_RAQUETE = 370.0  # Movimento contínuo suave (pixels por segundo)
     VELOCIDADE_BOLA_INICIAL = 420.0
     ACELERACAO_BOLA = 25.0
 
@@ -44,6 +44,10 @@ class JogoPingPong(Jogo):
         self.p2_x = 1024 - 35 - self.largura_raquete
         self.p2_y = self.p1_y
 
+        # Direções de movimento contínuo (+1.0 = Desce, -1.0 = Sobe)
+        self.p1_dir = 1.0
+        self.p2_dir = -1.0
+
         # Bola
         self.raio_bola = 9
         self.bola_x = 512.0
@@ -60,11 +64,9 @@ class JogoPingPong(Jogo):
         self.timer_estado = 0.0
         self.modo_touch = True
 
-        # Botões de Toque na Tela para apoio aos jogadores
-        self.btn_p1_up = TouchButton(10, 100, 70, 180, "▲", COLOR_CYAN)
-        self.btn_p1_down = TouchButton(10, 320, 70, 180, "▼", COLOR_CYAN)
-        self.btn_p2_up = TouchButton(944, 100, 70, 180, "▲", COLOR_RED)
-        self.btn_p2_down = TouchButton(944, 320, 70, 180, "▼", COLOR_RED)
+        # Botões de Toque Translúcidos no meio da tela
+        self.rect_touch_p1 = pygame.Rect(90, 190, 190, 230)
+        self.rect_touch_p2 = pygame.Rect(744, 190, 190, 230)
 
     def get_id(self) -> str:
         return "ping_pong"
@@ -73,7 +75,7 @@ class JogoPingPong(Jogo):
         return "Ping Pong Arcade"
 
     def get_descricao(self) -> str:
-        return "Clássico Pong para 2 jogadores. P1 usa BT1/BT2 e P2 usa BT3/BT4. Vence quem fizer 5 pontos!"
+        return "Pong arcade contínuo: as raquetes movem-se sozinhas. Aperte o botão para inverter a direção!"
 
     def iniciar(self) -> None:
         self.retorno_menu = False
@@ -82,6 +84,8 @@ class JogoPingPong(Jogo):
         self.vencedor = None
         self.p1_y = (self.topo_campo + self.fundo_campo) // 2 - self.altura_raquete // 2
         self.p2_y = self.p1_y
+        self.p1_dir = 1.0
+        self.p2_dir = -1.0
         self._resetar_bola(direcao_p1=random.choice([True, False]))
         self.estado = "PRONTO"
         self.timer_estado = time.time() + 1.2
@@ -97,6 +101,16 @@ class JogoPingPong(Jogo):
         self.bola_vx = sentido_x * self.velocidade_atual
         self.bola_vy = angulo_y * self.velocidade_atual
 
+    def _inverter_p1(self):
+        """Inverte a direção contínua da raquete do Jogador 1."""
+        self.p1_dir = -self.p1_dir
+        self.audio.tocar("menu_move")
+
+    def _inverter_p2(self):
+        """Inverte a direção contínua da raquete do Jogador 2."""
+        self.p2_dir = -self.p2_dir
+        self.audio.tocar("menu_move")
+
     def processar_eventos(self, eventos_pygame: list[pygame.event.Event], estado_botoes: dict[str, bool]) -> None:
         if "MODO_TOUCH" in estado_botoes:
             self.modo_touch = estado_botoes["MODO_TOUCH"]
@@ -105,14 +119,35 @@ class JogoPingPong(Jogo):
             if self.header.processar_evento(evento):
                 self.retorno_menu = True
 
-            if evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+            # Toque nos botões translúcidos centrais ou na metade do campo
+            if self.estado == "JOGANDO" and evento.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
                 self.modo_touch = True
+                pos = evento.pos if hasattr(evento, "pos") else (int(evento.x * 1024), int(evento.y * 600))
+                if pos[0] < 512:
+                    self._inverter_p1()
+                else:
+                    self._inverter_p2()
 
-            # Toques rápidos nas setas da tela
-            self.btn_p1_up.processar_evento(evento)
-            self.btn_p1_down.processar_evento(evento)
-            self.btn_p2_up.processar_evento(evento)
-            self.btn_p2_down.processar_evento(evento)
+            # Teclado para testes (W/S para P1; Setas/Enter para P2)
+            elif self.estado == "JOGANDO" and evento.type == pygame.KEYDOWN:
+                if evento.key in (pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d):
+                    self.modo_touch = False
+                    self._inverter_p1()
+                elif evento.key in (pygame.K_UP, pygame.K_DOWN, pygame.K_RETURN, pygame.K_SPACE):
+                    self.modo_touch = False
+                    self._inverter_p2()
+
+        # Botões físicos: cada clique inverte a direção da respectiva raquete
+        if self.estado == "JOGANDO":
+            # P1 usa BT1 (ou BT2)
+            if estado_botoes.get("BT1") or estado_botoes.get("BT2"):
+                self.modo_touch = False
+                self._inverter_p1()
+
+            # P2 usa BT4 (ou BT3)
+            if estado_botoes.get("BT4") or estado_botoes.get("BT3"):
+                self.modo_touch = False
+                self._inverter_p2()
 
     def atualizar(self, dt: float) -> None:
         agora = time.time()
@@ -140,29 +175,25 @@ class JogoPingPong(Jogo):
 
         elif self.estado == "JOGANDO":
             # -------------------------------------------------------------
-            # Movimentação das Raquetes (Física + Teclado + Touch)
+            # Movimentação Contínua das Raquetes (Invertem nas bordas)
             # -------------------------------------------------------------
-            # P1: BT1 (Sobe) e BT2 (Desce)
-            p1_sobe = self.hw.esta_pressionado("BT1") or self.btn_p1_up.pressionado or pygame.key.get_pressed()[pygame.K_w]
-            p1_desce = self.hw.esta_pressionado("BT2") or self.btn_p1_down.pressionado or pygame.key.get_pressed()[pygame.K_s]
+            self.p1_y += self.p1_dir * self.VELOCIDADE_RAQUETE * dt
+            self.p2_y += self.p2_dir * self.VELOCIDADE_RAQUETE * dt
 
-            if p1_sobe and self.p1_y > self.topo_campo:
-                self.p1_y -= self.VELOCIDADE_RAQUETE * dt
-            if p1_desce and self.p1_y + self.altura_raquete < self.fundo_campo:
-                self.p1_y += self.VELOCIDADE_RAQUETE * dt
+            # Rebate automático nas bordas superior e inferior
+            if self.p1_y <= self.topo_campo:
+                self.p1_y = self.topo_campo
+                self.p1_dir = 1.0
+            elif self.p1_y + self.altura_raquete >= self.fundo_campo:
+                self.p1_y = self.fundo_campo - self.altura_raquete
+                self.p1_dir = -1.0
 
-            # P2: BT3 (Sobe) e BT4 (Desce)
-            p2_sobe = self.hw.esta_pressionado("BT3") or self.btn_p2_up.pressionado or pygame.key.get_pressed()[pygame.K_UP]
-            p2_desce = self.hw.esta_pressionado("BT4") or self.btn_p2_down.pressionado or pygame.key.get_pressed()[pygame.K_DOWN]
-
-            if p2_sobe and self.p2_y > self.topo_campo:
-                self.p2_y -= self.VELOCIDADE_RAQUETE * dt
-            if p2_desce and self.p2_y + self.altura_raquete < self.fundo_campo:
-                self.p2_y += self.VELOCIDADE_RAQUETE * dt
-
-            # Trava as raquetes nas bordas da quadra
-            self.p1_y = max(self.topo_campo, min(self.fundo_campo - self.altura_raquete, self.p1_y))
-            self.p2_y = max(self.topo_campo, min(self.fundo_campo - self.altura_raquete, self.p2_y))
+            if self.p2_y <= self.topo_campo:
+                self.p2_y = self.topo_campo
+                self.p2_dir = 1.0
+            elif self.p2_y + self.altura_raquete >= self.fundo_campo:
+                self.p2_y = self.fundo_campo - self.altura_raquete
+                self.p2_dir = -1.0
 
             # -------------------------------------------------------------
             # Movimentação e Colisões da Bola
@@ -257,19 +288,35 @@ class JogoPingPong(Jogo):
         pygame.draw.circle(superficie, COLOR_YELLOW, (int(self.bola_x), int(self.bola_y)), self.raio_bola)
         pygame.draw.circle(superficie, (255, 255, 255), (int(self.bola_x), int(self.bola_y)), self.raio_bola - 2)
 
-        # Setas Táteis Laterais para suporte a Touchscreen (Ocultas no modo físico)
+        # Botões Touch Translúcidos no meio da tela (Visíveis no modo touch)
         if self.modo_touch:
-            self.btn_p1_up.renderizar(superficie, fonte_tit)
-            self.btn_p1_down.renderizar(superficie, fonte_tit)
-            self.btn_p2_up.renderizar(superficie, fonte_tit)
-            self.btn_p2_down.renderizar(superficie, fonte_tit)
+            surf_alpha = pygame.Surface((1024, 600), pygame.SRCALPHA)
+            # Botão translúcido P1 (meio esquerdo)
+            pygame.draw.rect(surf_alpha, (0, 230, 255, 30), self.rect_touch_p1, border_radius=18)
+            pygame.draw.rect(surf_alpha, (0, 230, 255, 120), self.rect_touch_p1, width=2, border_radius=18)
+            # Botão translúcido P2 (meio direito)
+            pygame.draw.rect(surf_alpha, (255, 60, 90, 30), self.rect_touch_p2, border_radius=18)
+            pygame.draw.rect(surf_alpha, (255, 60, 90, 120), self.rect_touch_p2, width=2, border_radius=18)
+            superficie.blit(surf_alpha, (0, 0))
+
+            surf_t1 = fonte_med.render("INVERTER", True, COLOR_CYAN)
+            surf_sub1 = fonte_peq.render("TOQUE AQUI", True, (160, 230, 255))
+            superficie.blit(surf_t1, surf_t1.get_rect(center=(self.rect_touch_p1.centerx, self.rect_touch_p1.centery - 12)))
+            superficie.blit(surf_sub1, surf_sub1.get_rect(center=(self.rect_touch_p1.centerx, self.rect_touch_p1.centery + 15)))
+
+            surf_t2 = fonte_med.render("INVERTER", True, COLOR_RED)
+            surf_sub2 = fonte_peq.render("TOQUE AQUI", True, (255, 180, 190))
+            superficie.blit(surf_t2, surf_t2.get_rect(center=(self.rect_touch_p2.centerx, self.rect_touch_p2.centery - 12)))
+            superficie.blit(surf_sub2, surf_sub2.get_rect(center=(self.rect_touch_p2.centerx, self.rect_touch_p2.centery + 15)))
 
         # Rótulos dos Jogadores
-        surf_lbl_p1 = fonte_peq.render("P1: BT1(▲) BT2(▼)", True, COLOR_CYAN)
+        txt_p1 = "P1: Toque ou BT1 (Inverter)" if self.modo_touch else "P1: [BT1] Inverter Direção"
+        surf_lbl_p1 = fonte_peq.render(txt_p1, True, COLOR_CYAN)
         superficie.blit(surf_lbl_p1, (90, 520))
 
-        surf_lbl_p2 = fonte_peq.render("P2: BT3(▲) BT4(▼)", True, COLOR_RED)
-        superficie.blit(surf_lbl_p2, (780, 520))
+        txt_p2 = "P2: Toque ou BT4 (Inverter)" if self.modo_touch else "P2: [BT4] Inverter Direção"
+        surf_lbl_p2 = fonte_peq.render(txt_p2, True, COLOR_RED)
+        superficie.blit(surf_lbl_p2, (740, 520))
 
         # Mensagens Centrais de Estado
         if self.estado == "PRONTO":

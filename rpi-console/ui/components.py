@@ -119,7 +119,7 @@ class HardwareLedBar:
         (255, 215, 0),   # Amarelo
         (255, 140, 0)    # Laranja
     ]
-    NOMES_LEDS = ["LED 1 (D5)", "LED 2 (D6)", "LED 3 (D13)", "LED 4 (D19)", "LED 5 (D26)"]
+    NOMES_LEDS = ["LED 1 (Vermelho)", "LED 2 (Verde)", "LED 3 (Azul)", "LED 4 (Amarelo)", "LED 5 (Laranja)"]
 
     def __init__(self, y: int = 555):
         self.y = y

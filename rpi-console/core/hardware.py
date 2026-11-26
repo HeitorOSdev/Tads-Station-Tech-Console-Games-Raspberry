@@ -23,17 +23,19 @@ class HardwareManager:
     Oferece API unificada para botões, LEDs e sensor da pista de arame.
     """
 
-    # Mapeamento BCM dos pinos da Raspberry Pi 3 B+
+    # Mapeamento adaptado: LEDs nos pinos 11, 13, 15, 16 (marcados como GPIO 0, 2, 3, 4 no diagrama)
+    # e Botões nos pinos 29, 31, 33, 35, 18
     PINOS_BOTOES = {
-        "BT1": 17,  # Pino 11: P1 / Clicker / Start / Cor 0
-        "BT2": 27,  # Pino 13: P2 / Menu Cima / Cor 1
-        "BT3": 22,  # Pino 15: Menu Baixo / Start Steady / Cor 2
-        "BT4": 23,  # Pino 16: Fim Steady / Cor 3
-        "BT5": 24   # Pino 18: Select / Campo Minado 5 / Retorno ao Menu
+        "BT1": 5,   # Pino 29: BT1 (P1 / Cor 0 / Start / Esquerda Sup.)
+        "BT2": 6,   # Pino 31: BT2 (P1 Desce / Cor 1 / Menu Cima / Esquerda Inf.)
+        "BT3": 13,  # Pino 33: BT3 (P2 / Cor 2 / Início Steady / Direita Sup.)
+        "BT4": 19,  # Pino 35: BT4 (P2 / Cor 3 / Fim Steady / Direita Inf.)
+        "BT5": 24   # Pino 18: BT5 (Centro / Select / Retorno ao Menu 1.5s)
     }
 
-    PINOS_LEDS = [5, 6, 13, 19, 26]  # Pinos 29, 31, 33, 35, 37
-    PINO_ARAME = 16                  # Pino 36: Contato da argola metálica
+    # LEDs: 4 LEDs do Genius nos Pinos 11, 13, 15, 16 + LED 5 no Pino 37
+    PINOS_LEDS = [17, 27, 22, 23, 26]  # BCM 17 (P11), BCM 27 (P13), BCM 22 (P15), BCM 23 (P16), BCM 26 (P37)
+    PINO_ARAME = 16                    # Pino 36: Contato da argola metálica (BCM 16 com 1k em série)
 
     def __init__(self):
         self.is_rpi = RASPBERRY_HARDWARE
